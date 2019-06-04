@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 32
 #define INITIAL_SIZE 1024
 
 char * replaceWord(char * replacement)
@@ -62,11 +62,12 @@ char * findWord(char * fileName, char * word) //
 
 int main() {
     char * input = (char *)malloc(INITIAL_SIZE);
+    char * newBuffer;
     char ch;
     int charCounter = 0;
     //char * q = "Hello";
     //q = replaceWord("123456789");
-    //findWord("Buch.txt","Hello");
+    //findWord("demo.wb","Hello");
     //printf("%s",findWord("Buch.txt","for"));
 
 /*    char str[1024] = "Sample text, no real plot. Please ignore! I'm just messing around here; testing the limits.";
@@ -83,20 +84,24 @@ int main() {
         token = strtok(NULL, s);
     }*/
 
-    while ((ch = getchar()) != EOF)
+    while ((ch = getchar()) != '\n')
     {
             input[charCounter] = ch;
             charCounter++;
             if (charCounter >= sizeof(input))
             {
-                char * newBuffer;
-                while( realloc(input, sizeof(input)+BUFFER_SIZE) == NULL) // check that reallocation is successful
-                {
-
+                newBuffer = realloc(input,sizeof(input)+BUFFER_SIZE); // sizeof(input) doesn't actually work
+                if( newBuffer == NULL) {
+                    perror("reallocation of variable input failed.");
+                    //handle realloc error
                 }
-
+                input = newBuffer;
             }
     }
+    input[charCounter] = '\0';
+
+    printf("%s\n",input);
+    printf("%d",sizeof(&input));
 
     return 0;
 }
