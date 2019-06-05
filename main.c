@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUFFER_SIZE 32
-#define INITIAL_SIZE 1024
+#define BUFFER_SIZE 1024
+#define INITIAL_SIZE 256
 
 char * replaceWord(char * replacement)
 {
@@ -61,36 +61,47 @@ char * findWord(char * fileName, char * word) //
 
 
 int main() {
-    char * input = (char *)malloc(INITIAL_SIZE);
-    char * newBuffer;
+    char *input = (char *) malloc(INITIAL_SIZE);
+    char *newBuffer;
     char ch;
-    int charCounter = 0;
+    int charCounter = 0, currentBufferSize = INITIAL_SIZE;
     //char * q = "Hello";
     //q = replaceWord("123456789");
     //findWord("demo.wb","Hello");
     //printf("%s",findWord("Buch.txt","for"));
 
-/*    char str[1024] = "Sample text, no real plot. Please ignore! I'm just messing around here; testing the limits.";
-    const char s[256] = "!., ";
+
+    char *delims = (char *) malloc(256-10-24-24+1);
+    int delimCounter = 0;
+    for (int i = 1; i<256; i++) //
+    {
+        if ((i < 48) || (i >57 && i < 65) || (i > 90 && i < 97) || (i > 122))
+        {
+            delims[delimCounter] = i;
+            delimCounter++;
+        }
+    }
+    delims[delimCounter] = '\0';
+
+    char str[1024] = "Sample text, no real 8756 plot. Ple^ase ignore! I'm$just messing around here; testing the limits.";
     char *token;
 
-    *//* get the first token *//*
-    token = strtok(str, s);
+    token = strtok(str, delims);
 
-    *//* walk through other tokens *//*
     while( token != NULL ) {
         printf( " %s\n", token );
 
-        token = strtok(NULL, s);
-    }*/
+        token = strtok(NULL, delims);
+    }
 
     while ((ch = getchar()) != '\n')
     {
             input[charCounter] = ch;
             charCounter++;
-            if (charCounter >= sizeof(input))
+            if (charCounter >= currentBufferSize)
             {
                 newBuffer = realloc(input,sizeof(input)+BUFFER_SIZE); // sizeof(input) doesn't actually work
+                currentBufferSize+= BUFFER_SIZE;
                 if( newBuffer == NULL) {
                     perror("reallocation of variable input failed.");
                     //handle realloc error
@@ -98,10 +109,11 @@ int main() {
                 input = newBuffer;
             }
     }
+
     input[charCounter] = '\0';
 
     printf("%s\n",input);
-    printf("%d",sizeof(&input));
+    printf("%d",currentBufferSize);
 
     return 0;
 }
