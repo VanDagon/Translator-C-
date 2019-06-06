@@ -5,49 +5,53 @@
 #define BUFFER_SIZE 32
 #define INITIAL_SIZE 32
 
-char * replaceWord(char * replacement)
+char * replaceWord(char * replacement) // returns a copy of string 'replacement'
 {
     int l = strlen(replacement);
     char * newWord;
-    newWord = (char *) malloc(l);
+    newWord = (char *) malloc(l); // allocate 'l' amount of chars
     strcpy(newWord,replacement);
+    // newWord[l] = '\0' // is this necessary?
     return newWord;
 }
 
-char * findWord(char * fileName, char * word) //
+char * findWord(char * fileName, char * word) // find the line that starts with 'word' in dictionary 'filename'
 {
-    FILE *f;
+    FILE *f; 
     int i = 0, l = strlen(word), wordFound = 0, mismatch = 0;
     char * line = (char *) malloc(1024);
 
     f = fopen(fileName,"r");
 
-    if (f == NULL)
+    if (f == NULL) // check that file exists
     {
         perror("Error while opening file.");
         exit(EXIT_FAILURE);
     }
 
-    while (( fgets (line, 1024, f)!=NULL ))
+    while (( fgets (line, 1024, f)!=NULL )) // read a line from file, maximum 1024 characters?
     {
-            mismatch = 0;
-            for (i = 0 ; i < l ; i ++) {
+            mismatch = 0; 
+            for (i = 0 ; i < l ; i ++) { // compare 'word' to the start of 'line', character by character
                 if (word[i] != line[i]) {
-                    mismatch = 1;
+                    mismatch = 1; // if a mismatch is found, move to next line
                     break;
                 }
             }
-            if ((line[l]==':') && (mismatch == 0))
+            // if character ':' is reached, it means we have found 'word' in dictionary
+            if ((line[l]==':') && (mismatch == 0)) 
             {
                 wordFound = 1;
                 break;
             }
     }
-    if (wordFound) {
+    if (wordFound) { // if the 'word' is found 
         line += l + 1; // slide pointer to the position after the ':' in dictionary line
         line[strlen(line)-1]='\0'; // replace the '\n' character at the end of the line with '\0'
     }
-    else
+    // if the while loop finished reading all lines, but 'word' was not found
+    // then surround 'word' with <> and return it.
+    else 
     {
         char * result = (char *) malloc(2);
         result[0] = '<';
@@ -58,11 +62,11 @@ char * findWord(char * fileName, char * word) //
         return result;
     }
 
-    fclose(f);
+    fclose(f); // TO DO: should we close the file after searching each word?
     return line;
 }
 
-int checkChar(char c, char * delims)
+int checkChar(char c, char * delims) // checks if char 'c' is a separater
 {
     if (strchr(delims,c)!=NULL) // strchr returns NULL if 'c' is not found in 'delims'
     {
@@ -82,66 +86,18 @@ int main() {
     char *newBuffer;
     char ch;
     int charCounter = 0, currentBufferSize = INITIAL_SIZE;
-    //char * q = "Hello";
-    //q = replaceWord("123456789");
-    //findWord("demo.wb","Hello");
 
-
-
-/*    char *delims = (char *) malloc(256-10-24-24+1);
-    int delimCounter = 0;
-    for (int i = 1; i<256; i++) //
+    // TO DO: replace '~' with EOF (CLION does not see EOF)
+    while ((ch = getc(stdin)) != '~') // read characters one by one, stop at '~' 
     {
-        if ((i < 48) || (i >57 && i < 65) || (i > 90 && i < 97) || (i > 122))
+        if (!checkChar(ch,delims1)) // check if 'ch' is a separator
         {
-            delims[delimCounter] = i;
-            delimCounter++;
-        }
-    }
-    delims[delimCounter] = '\0';
-
-    char str[1024] = "Sample text, no real 8756 plot. Ple^ase ignore! I'm$just messing around here; testing the limits.";
-    char *token;
-
-    token = strtok(str, delims);
-    printf("%s\n",str);
-    while( token != NULL ) {
-        printf( " %s\n", token );
-
-        token = strtok(NULL, delims);
-    }*/
-
-/*    while ((ch = getchar()) != '\n') // get input
-    {
-            if (!checkChar(ch,delims1))
-            {
-
-            }
-            currentWord[charCounter] = ch;
-            charCounter++;
-            if (charCounter >= currentBufferSize)
-            {
-                newBuffer = realloc(currentWord,sizeof(currentWord)+BUFFER_SIZE); // sizeof(input) doesn't actually work
-                currentBufferSize+= BUFFER_SIZE;
-                if( newBuffer == NULL) {
-                    perror("reallocation of variable input failed.");
-                    //handle realloc error
-                }
-                currentWord = newBuffer;
-            }
-    }*/
-
-
-    while ((ch = getc(stdin)) != '~') // get input
-    {
-        if (!checkChar(ch,delims1))
-        {
-            currentWord[charCounter] = '\0';
+            currentWord[charCounter] = '\0'; // finalize 'currentWord' once a separator is read
             charCounter = 0;
 
             if (strlen(currentWord)>0) //if 'currentWord' is not empty
             {
-                printf(findWord("demo.wb",currentWord));
+                printf(findWord("demo.wb",currentWord)); // find the corresponding word in dictionary and print it
                 printf("%c",ch);
                 currentBufferSize = INITIAL_SIZE;
                 currentWord = realloc(currentWord,INITIAL_SIZE);
@@ -151,26 +107,29 @@ int main() {
                 printf("%c",ch);
             }
         }
+        // if 'ch' is not a separator, append it to 'currentWord'
         else
         {
             currentWord[charCounter] = ch;
             charCounter++;
 
-            if (charCounter >= currentBufferSize) {
-                newBuffer = realloc(currentWord, currentBufferSize + BUFFER_SIZE);
+            if (charCounter >= currentBufferSize) { // if 'currentWord' needs more memory, reallocate it
+                // use 'newBuffer' instead of 'currentWord' for realloc
+                // this way if realloc() fails, the value of 'currentWord' is not lost
+                newBuffer = realloc(currentWord, currentBufferSize + BUFFER_SIZE); 
                 currentBufferSize += BUFFER_SIZE;
                 if (newBuffer == NULL) {
                     perror("reallocation for 'currentWord' failed.");
-                    //handle realloc error
+                    //TO DO: handle realloc error
                 }
                 currentWord = newBuffer;
                 free(newBuffer);
+                //
             }
         }
     }
 
     // currentWord[charCounter] = '\0'; // is this needed?
-
-
+            
     return 0;
 }
