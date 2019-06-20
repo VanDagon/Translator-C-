@@ -8,7 +8,7 @@ Takes input through stdin, replaces every word with the corresponding word in an
 Gives the output in stdout.
 
 TO DOs:
-1. Debug programm on Linux (find out why it does not print any words)
+1. Debug programm on Linux (find out why it does not print any words) --- done
 2. Replace '~' with EOF for end of input --- done
 3. Implement de- and re-capitalization of words, so that words containing capital letters can be found in dictionary.
 4. Re-classify numbers as separators (according to example given) --- done
