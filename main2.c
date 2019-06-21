@@ -21,6 +21,13 @@ char * findWord(char * fileName, char * word) // find the line that starts with 
     FILE *f;
     int i = 0, l = strlen(word), wordFound = 0, mismatch = 0;
     char * line = (char *) malloc(1024);
+    int capital = 0;
+    
+    if ((word[0]>=65) && (word[0]<=90))
+    {
+        word[0] += 32; // de-capitalize
+        capital++;
+    }
 
     f = fopen(fileName,"r");
 
@@ -58,6 +65,12 @@ char * findWord(char * fileName, char * word) // find the line that starts with 
         char * result = (char *) malloc(2);
         result[0] = '<';
         result[1] = '\0';
+        
+        if (capital)
+        {
+            word[0] -= 32; // de-capitalize
+        }
+        
         const char * newword = replaceWord(word); // TO DO: Clear newword after use, so it is not lodged in memory forever
         strcat(result,newword);
         strcat(result,">");
@@ -69,6 +82,10 @@ char * findWord(char * fileName, char * word) // find the line that starts with 
     strcpy(result,line);
     //*(result+newLen-1 = 'q';
     result[newLen-2] = '\0';
+    if (capital)
+    {
+        result[0] -= 32; // de-capitalize
+    }
     return result;
 }
 
