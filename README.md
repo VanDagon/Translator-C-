@@ -16,3 +16,4 @@ TO DOs:
 6. Check that string builders terminate string with '\0'
 7. Test buffing 'currentWord' when input has long words
 8. Adjust findWord(), so that it expects ':' surrounded by spaces in dictionary --- done
+9. open dictionary once and close it after translating the text ("too many open files")
