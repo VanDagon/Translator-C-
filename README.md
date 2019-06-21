@@ -15,4 +15,4 @@ TO DOs:
 5. Check malloc() and realloc()-s and make sure free() is present where needed
 6. Check that string builders terminate string with '\0'
 7. Test buffing 'currentWord' when input has long words
-8. Adjust findWord(), so that it expects ':' surrounded by spaces in dictionary 
+8. Adjust findWord(), so that it expects ':' surrounded by spaces in dictionary --- done
