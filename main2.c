@@ -159,7 +159,7 @@ void parseAndPrint(char * input, char * delims)
         {
             if (wordCharCounter>0)
             {
-                printf("%s",findWord("demo.wb",currentWord)); // find the corresponding word in dictionary and print it
+                printf("%s",findWord("demo0.wb",currentWord)); // find the corresponding word in dictionary and print it
                 currentBufferSize = 0;
             }
             wordCharCounter = 0;
