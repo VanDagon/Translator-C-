@@ -11,7 +11,7 @@ char * replaceWord(char * replacement) // returns a copy of string 'replacement'
     char * newWord;
     newWord = (char *) malloc(l); // allocate 'l' amount of chars
     strcpy(newWord,replacement);
-    // newWord[l] = '\0' // is this necessary?
+    //newWord[l] = '\0'; // is this necessary?
     return newWord;
 }
 
@@ -47,14 +47,14 @@ char * findWord(char * fileName, char * word) // find the line that starts with 
                 }
             }
             // if character ':' is reached, it means we have found 'word' in dictionary
-            if ((line[l]==':') && (mismatch == 0))
+            if ((line[l]==' ') && (mismatch == 0))
             {
                 wordFound = 1;
                 break;
             }
     }
     if (wordFound) { // if the 'word' is found
-        line += l + 1; // slide pointer to the position after the ':' in dictionary line
+        line += l + 3; // slide pointer to the position after the ':' in dictionary line
         //line[strlen(line)-1]='\0'; // replace the '\n' character at the end of the line with '\0'
 
     }
@@ -62,9 +62,10 @@ char * findWord(char * fileName, char * word) // find the line that starts with 
     // then surround 'word' with <> and return it.
     else
     {
-        char * result = (char *) malloc(2);
+        char * result = (char *) malloc(3);
         result[0] = '<';
-        result[1] = '\0';
+        result[1] = ' ';
+        result[2] = '\0';
         
         if (capital)
         {
@@ -73,14 +74,13 @@ char * findWord(char * fileName, char * word) // find the line that starts with 
         
         const char * newword = replaceWord(word); // TO DO: Clear newword after use, so it is not lodged in memory forever
         strcat(result,newword);
-        strcat(result,">");
+        strcat(result," >");
         return result;
     }
     fclose(f); // TO DO: should we close the file after searching each word?
     int newLen = strlen(line);
     char * result = (char *) malloc(newLen);
     strcpy(result,line);
-    //*(result+newLen-1 = 'q';
     result[newLen-2] = '\0';
     if (capital)
     {
@@ -159,7 +159,7 @@ void parseAndPrint(char * input, char * delims)
         {
             if (wordCharCounter>0)
             {
-                printf("%s ",findWord("demo.wb",currentWord)); // find the corresponding word in dictionary and print it
+                printf("%s",findWord("demo.wb",currentWord)); // find the corresponding word in dictionary and print it
                 currentBufferSize = 0;
             }
             wordCharCounter = 0;
