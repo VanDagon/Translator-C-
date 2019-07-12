@@ -6,7 +6,7 @@
 #define BUFFER_SIZE 1024
 #define LINE_SIZE_INITIAL 1024
 #define WORD_SIZE_INITIAL 64
-#define DICTIONARY_INITIAL_SIZE 1024
+#define DICTIONARY_INITIAL_SIZE 1024 // these many words (struct dictionaryTuple object for each)
 #define INPUT_INITIAL_SIZE 1024*1024 // ~1024 lines with 1024 characters (1 million bytes / 1MB)
 #define INPUT_BUFFER_SIZE 1024*1024 // add 1024 lines per buff
 
@@ -15,25 +15,38 @@ struct dictionaryTuple{
     char * translation;
 };
 
-struct dictionaryTuple parseLine(char * line){
+struct dictionary{
+    struct dictionaryTuple * words;
+    int wordCount;
+};
+
+struct dictionary * initDictionary()
+{
+    struct dictionary * result = malloc(sizeof(struct dictionary));
+    result->wordCount = 0;
+    result->words = (struct dictionaryTuple*) malloc(sizeof(struct dictionaryTuple) * DICTIONARY_INITIAL_SIZE );
+    return result;
+}
+
+struct dictionaryTuple * parseLine(char * line){
 
     char * token;
-    char delims[4] = ":\nEOF"
-    struct dictionaryTuple thisTuple = (struct dictionaryTuple*) malloc (sizeof(dictionaryTuple));
+    char delims[] = ":\nEOF";
+    struct dictionaryTuple * thisTuple = (struct dictionaryTuple*) malloc (sizeof(struct dictionaryTuple));
 
     token = strtok(line,delims);
-    thisTuple.word = replaceWord(token);
+    thisTuple->word = token; //replaceWord(token)
     token = strtok(NULL,delims);
-    thisTuple.translation = replaceWord(token);
+    thisTuple->translation = token; //replaceWord(token);
 
     return thisTuple;
 }
 
-int buffDictionary(struct * dictionaryTuple, int currentSize) 
+int buffDictionary(struct dictionaryTuple * thisTuple, int currentSize) 
 {
     int newSize = currentSize;
-    struct * dictionaryTuple testBuffer = (struct dictionaryTuple*)
-        realloc(sizeof(dictionaryTuple) * (currentSize + BUFFER_SIZE));
+    struct dictionaryTuple * testBuffer = (struct dictionaryTuple*)
+        realloc(thisTuple,sizeof(struct dictionaryTuple) * (currentSize + BUFFER_SIZE));
 
     if (testBuffer==NULL)
     {
@@ -41,32 +54,34 @@ int buffDictionary(struct * dictionaryTuple, int currentSize)
     }
     else
     {
-        dictionaryTuple = testBuffer;
+        thisTuple = testBuffer;
         newSize+= WORD_SIZE_INITIAL;
     }
 
     return newSize;
 }
 
-struct * loadDictionary(FILE * f)
+struct dictionaryTuple * loadDictionary(char * fileName)
 {
-    ssize_t read;
+    size_t read;
     size_t len;
     char * line;
     int wordCount = 0;
-    struct * dictionaryTuple result = (struct dictionaryTuple*) 
-        malloc(sizeof(dictionaryTuple) * DICTIONARY_INITIAL_SIZE);
-        int allocatedSize = DICTIONARY_INITIAL_SIZE, wordCount = 0;  
+    FILE * f;
+    struct dictionaryTuple * result = (struct dictionaryTuple*) 
+        malloc(sizeof(struct dictionaryTuple) * DICTIONARY_INITIAL_SIZE);
+        int allocatedSize = DICTIONARY_INITIAL_SIZE;  
 
-    fopen(f);
+    f = fopen(fileName,"r");
 
     while ((read = getline(&line, &len, f)) != -1) {
         if (wordCount >= allocatedSize)
         {
+            printf("HEREREREREEHETE!");
             allocatedSize = buffDictionary(result, allocatedSize);
         }
 
-        result[wordCount] = parseLine(line);
+        result[wordCount] = *parseLine(line);
         wordCount++;
     }
 
@@ -76,8 +91,7 @@ struct * loadDictionary(FILE * f)
 int buffInputString(char * inputString, int currentSize)
 {
     int newSize = currentSize;
-    char * testBuffer = (char *)
-        realloc( currentSize + INPUT_BUFFER_SIZE));
+    char * testBuffer = (char *) realloc(inputString, currentSize + INPUT_BUFFER_SIZE);
 
     if (testBuffer==NULL)
     {
@@ -95,8 +109,7 @@ int buffInputString(char * inputString, int currentSize)
 int buffWord(char * word, int currentSize)
 {
     int newSize = currentSize;
-    char * testBuffer = (char *)
-        realloc( currentSize + BUFFER_SIZE));
+    char * testBuffer = (char *) realloc(word, currentSize + BUFFER_SIZE);
 
     if (testBuffer==NULL)
     {
@@ -176,22 +189,24 @@ char * findWord(char * word)
 void parseAndPrint(char * inputString, char * delims)
 {
     size_t len = strlen(inputString);
-    int * index=0;
+    int * index;
+    *index = 0;
 
-    while (index<len)
+    while (*index<len)
     {
         
-        printf("%s",findWord(assembleNextWord(inputString,&index,delims)));
+        printf("%s",findWord(assembleNextWord(inputString,index,delims)));
     }
 
 }
 
-
 int main() {
     char * delims1 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // non-separators
-    struct * dict = loadDictionary(LIBRARY_NAME);
-    char * inp = readStdInput();
-    parseAndPrint(inp,delims1);
+    //struct dictionaryTuple * dict = loadDictionary(LIBRARY_NAME);
+    //printf("%s",dict[0].word);
+    //char * inp = readStdInput();
+    //parseAndPrint(inp,delims1);
 
     return 0;
 }
+
