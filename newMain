@@ -3,7 +3,7 @@
 #include <string.h>
 
 #define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define LIBRARY_NAME "demo.wb"
+#define LIBRARY_NAME "example03.wb"
 #define BUFFER_SIZE 1024
 #define LINE_SIZE_INITIAL 1024
 #define WORD_SIZE_INITIAL 64
@@ -171,35 +171,6 @@ int checkChar(char c, char * delims) // checks if char 'c' is a separator
     // returns 1 if c is letter, 0 otherwise
 }
 
-/* char * assembleNextWord(char * input, int * currentIndex, char * delims) ////////////////////
-{
-    char * word = (char *) malloc(WORD_SIZE_INITIAL);
-    int allocatedSize = WORD_SIZE_INITIAL;    
-    int charCounter = 0;  
-    char ch = input[*currentIndex];
-    printf("CURRENT CHAR: %c\n",ch);
-
-    if (!checkChar(ch,delims))
-    {
-        printf("%c",ch);
-        *currentIndex++;
-    }
-
-    while(checkChar(ch,delims))
-    {
-        if (charCounter>allocatedSize)
-        {
-            allocatedSize = buffWord(word,allocatedSize);
-        }
-        word[charCounter++] = ch;
-        *currentIndex++;
-        ch = input[*currentIndex];
-    }
-
-    printf("%c",ch);
-    return word;
-} */
-
 char * assembleNextWord(int * i, char * input, char * delims){
 
     char ch = input[*i];
@@ -218,11 +189,61 @@ char * assembleNextWord(int * i, char * input, char * delims){
     return word;
 }
 
+// check if target contains capital letters
+// return 0 if no capital letters
+// return 1 if only the first character is capital
+// return 2 if all characters are capital
+int caps(char * target)
+{
+    size_t l = strlen(target);
+    int allCaps = (target[0] < 91) * 2;
+    int firstCap = (target[0] < 91);
+    for (int i = 1 ; i < l; i ++)
+    {
+        if (target[i] > 91)
+        {
+            allCaps = 0;
+        }
+        else
+        {
+            firstCap = 0;
+        }
+        
+    }
+    
+    return firstCap + allCaps;
+}
+
+char * decapitalize(char * target) /// TO BE USED ONLY WITH target CONTAINING LETTERS
+{
+    size_t l = strlen(target);
+    for (int i = 0 ; i < l; i ++){
+        target[i] += (target[i]<91) * 32;
+    }
+
+    return target;
+}
+
+char * capitalize(char * target, int cp) /// TO BE USED ONLY WITH target CONTAINING LETTERS
+{
+    size_t l = strlen(target);
+    if (cp == 2){
+        for (int i = 0 ; i < l; i ++){
+            target[i] -=  32;
+        }
+    }
+    else if (cp == 1)
+    {
+        target[0] -= 32;
+    }
+    
+    return target;
+}
+
 char * findWord(char * theWord, struct dictionary * theDictionary)
 {            
-    int capital = (theWord[0]<90); // find if first letter is capital
-    if (capital){theWord[0] += 32;} // decapitalize
-
+    int capital = caps(theWord); // find if first letter is capital
+    if (capital>0){theWord = decapitalize(theWord);} // decapitalize
     int l = theDictionary->wordCount;
     for (int i = 0 ; i < l ; i++)
     {
@@ -231,7 +252,7 @@ char * findWord(char * theWord, struct dictionary * theDictionary)
         {
             char * found = (char *) malloc(sizeof(char) * strlen(theDictionary->words[i].translation));
             strcpy(found,theDictionary->words[i].translation);
-            if (capital){found[0] -= 32;} // recapitalize
+            if (capital>0){theWord = capitalize(found,capital);} // recapitalize
             return found;
         }
     }
@@ -240,7 +261,7 @@ char * findWord(char * theWord, struct dictionary * theDictionary)
     notFound[0] = '<';
     notFound[1] = ' ';
     notFound[2] = '\0';
-    if (capital){theWord[0] -= 32;}
+    if (capital>0){theWord = capitalize(theWord,capital);} // recapitalize
     strcat(notFound,theWord);
     strcat(notFound," >\0");
 
@@ -276,9 +297,7 @@ int main() {
     struct dictionary * D1 = (struct dictionary*) malloc(sizeof(struct dictionary));
     D1 = loadDictionary(LIBRARY_NAME);
     char * inp = readStdInput();
-    char * q = "das";
-    //printf("%s\n",findWord(q,D1));
-    parseAndPrint(inp,LETTERS,D1);
+    parseAndPrint(inp,LETTERS,D1); 
     return 0;
 }
 
