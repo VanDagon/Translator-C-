@@ -7,7 +7,7 @@
 #define BUFFER_SIZE 1024
 #define LINE_SIZE_INITIAL 1024
 #define WORD_SIZE_INITIAL 64
-#define DICTIONARY_INITIAL_SIZE 1024 // these many words (struct dictionaryTuple object for each)
+#define DICTIONARY_INITIAL_SIZE 8 // these many words (struct dictionaryTuple object for each)
 #define INPUT_INITIAL_SIZE 1024*1024 // ~1024 lines with 1024 characters (1 million bytes / 1MB)
 #define INPUT_BUFFER_SIZE 1024*1024 // add 1024 lines per buff
 
@@ -22,7 +22,8 @@ struct dictionary{
     int allocatedSize;
 };
 
-struct dictionary * initDictionary()
+//generates, initializes and returns a struct dictionary object
+struct dictionary * initDictionary() 
 {
     struct dictionary * result = malloc(sizeof(struct dictionary));
     result->wordCount = 0;
@@ -59,7 +60,7 @@ void buffDictionary(struct dictionary * theDictionary)
     {
         theDictionary->words = testBuffer;
         theDictionary->allocatedSize+= WORD_SIZE_INITIAL;
-        //printf("Dictionary successfully buffed to %d\n",theDictionary->allocatedSize);
+        //printf("Dictionary successfully buffed to %d words\n",theDictionary->allocatedSize);
     }
 }
 
@@ -145,13 +146,14 @@ int buffWord(char * word, int currentSize)
 
 char * readStdInput()
 {
-    char * result = (char* ) malloc(INPUT_INITIAL_SIZE);
-    int charCounter = 0, allocatedSize = INPUT_INITIAL_SIZE;//// >????? 
+    char * result = (char* ) malloc(sizeof(char) * INPUT_INITIAL_SIZE);
+    int charCounter = 0, allocatedSize = INPUT_INITIAL_SIZE; //// >????? 
     char ch;
-    while (ch = getc(stdin) != EOF)
+    while ((ch = getc(stdin)) != EOF)
     {
         if (charCounter > allocatedSize)
         {
+            printf("BUFFING INPUT\n");
             allocatedSize = buffInputString(result,allocatedSize);
         }
 
@@ -159,6 +161,7 @@ char * readStdInput()
         charCounter++; 
 
     }
+    //result[charCounter] = "\0"; ???
 
     return result;
 }
@@ -169,7 +172,7 @@ int checkChar(char c, char * delims) // checks if char 'c' is a separator
     // returns 1 if c is letter, 0 otherwise
 }
 
-char * assembleNextWord(char * input, int * currentIndex, char * delims)
+char * assembleNextWord(char * input, int * currentIndex, char * delims) ////////////////////
 {
     char * result = (char *) malloc(WORD_SIZE_INITIAL);
     int allocatedSize = WORD_SIZE_INITIAL;    
@@ -197,24 +200,35 @@ char * assembleNextWord(char * input, int * currentIndex, char * delims)
     return result;
 }
 
-char * findWord(char * word)
-{
-    char * result;
-//////////////////////////////
+char * findWord(char * theWord, struct dictionary * theDictionary)
+{            
+    int l = theDictionary->wordCount;
+    for (int i = 0 ; i < l ; i++)
+    {
+        
+        if (!strcmp(theDictionary->words[i].word,theWord))
+        {
+            return theDictionary->words[i].translation;
+        }
+    }
 
-    return result;
+    char * notFound = (char *) malloc(sizeof(char) * (5+strlen(theWord))); 
+    strcat(notFound,"< ");
+    strcat(notFound,theWord);
+    strcat(notFound," >\0");
+
+    return notFound;
 }
 
-void parseAndPrint(char * inputString, char * delims)
+void parseAndPrint(char * inputString, char * delims, struct dictionary * theDictionary)
 {
     size_t len = strlen(inputString);
     int * index;
     *index = 0;
 
     while (*index<len)
-    {
-        
-        printf("%s",findWord(assembleNextWord(inputString,index,delims)));
+    {   
+        printf("%s",findWord(assembleNextWord(inputString,index,delims),theDictionary));
     }
 
 }
@@ -222,10 +236,10 @@ void parseAndPrint(char * inputString, char * delims)
 int main() {
     struct dictionary * D1 = (struct dictionary*) malloc(sizeof(struct dictionary));
     D1 = loadDictionary(LIBRARY_NAME);
-    printDictionary(D1);
-    //char * inp = readStdInput();
-    //parseAndPrint(inp,LETTERS);
-
+    char * inp = readStdInput();
+    char * q = "das";
+    //printf("%s\n",findWord(q,D1));
+    //parseAndPrint(inp,LETTERS,D1);
     return 0;
 }
 
