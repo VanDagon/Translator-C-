@@ -167,52 +167,80 @@ char * readStdInput()
 
 int checkChar(char c, char * delims) // checks if char 'c' is a separator
 {
-    return (strchr(delims,c)==NULL); // strchr returns NULL if 'c' is not found in 'delims'
+    return (strchr(delims,c)!=NULL); // strchr returns NULL if 'c' is not found in 'delims'
     // returns 1 if c is letter, 0 otherwise
 }
 
-char * assembleNextWord(char * input, int * currentIndex, char * delims) ////////////////////
+/* char * assembleNextWord(char * input, int * currentIndex, char * delims) ////////////////////
 {
-    char * result = (char *) malloc(WORD_SIZE_INITIAL);
+    char * word = (char *) malloc(WORD_SIZE_INITIAL);
     int allocatedSize = WORD_SIZE_INITIAL;    
     int charCounter = 0;  
     char ch = input[*currentIndex];
+    printf("CURRENT CHAR: %c\n",ch);
 
     if (!checkChar(ch,delims))
     {
         printf("%c",ch);
+        *currentIndex++;
     }
 
     while(checkChar(ch,delims))
     {
         if (charCounter>allocatedSize)
         {
-            allocatedSize = buffWord(result,allocatedSize);
+            allocatedSize = buffWord(word,allocatedSize);
         }
-        result[charCounter] = ch;
-        charCounter++;
+        word[charCounter++] = ch;
         *currentIndex++;
         ch = input[*currentIndex];
     }
 
     printf("%c",ch);
-    return result;
+    return word;
+} */
+
+char * assembleNextWord(int * i, char * input, char * delims){
+
+    char ch = input[*i];
+    int charCounter = 0;
+    char * word = (char * ) malloc(sizeof(char) * WORD_SIZE_INITIAL);
+
+    while (checkChar(ch,delims))
+    {
+        word[charCounter++] = ch;
+        (*i)++;
+        ch = input[*i]; 
+    }
+
+    word[charCounter] = '\0';
+
+    return word;
 }
 
 char * findWord(char * theWord, struct dictionary * theDictionary)
 {            
+    int capital = (theWord[0]<90); // find if first letter is capital
+    if (capital){theWord[0] += 32;} // decapitalize
+
     int l = theDictionary->wordCount;
     for (int i = 0 ; i < l ; i++)
     {
         
         if (!strcmp(theDictionary->words[i].word,theWord))
         {
-            return theDictionary->words[i].translation;
+            char * found = (char *) malloc(sizeof(char) * strlen(theDictionary->words[i].translation));
+            strcpy(found,theDictionary->words[i].translation);
+            if (capital){found[0] -= 32;} // recapitalize
+            return found;
         }
     }
 
     char * notFound = (char *) malloc(sizeof(char) * (5+strlen(theWord))); 
-    strcat(notFound,"< ");
+    notFound[0] = '<';
+    notFound[1] = ' ';
+    notFound[2] = '\0';
+    if (capital){theWord[0] -= 32;}
     strcat(notFound,theWord);
     strcat(notFound," >\0");
 
@@ -222,14 +250,26 @@ char * findWord(char * theWord, struct dictionary * theDictionary)
 void parseAndPrint(char * inputString, char * delims, struct dictionary * theDictionary)
 {
     size_t len = strlen(inputString);
-    int * index;
+    int * index = (int *) malloc(sizeof(int));
     *index = 0;
+    char ch;
 
-    while (*index<len)
+    while ((*index)<len)
     {   
-        printf("%s",findWord(assembleNextWord(inputString,index,delims),theDictionary));
+        ch = inputString[*index];
+        if (!checkChar(ch,delims))
+        {
+            printf("%c",ch);
+            (*index)++;
+        }
+        else // *index is incremented by assembleNextWord
+        {
+            printf("%s",findWord(assembleNextWord(index,inputString,delims),theDictionary));
+        }   
+        
     }
 
+    return;
 }
 
 int main() {
@@ -238,7 +278,7 @@ int main() {
     char * inp = readStdInput();
     char * q = "das";
     //printf("%s\n",findWord(q,D1));
-    //parseAndPrint(inp,LETTERS,D1);
+    parseAndPrint(inp,LETTERS,D1);
     return 0;
 }
 
