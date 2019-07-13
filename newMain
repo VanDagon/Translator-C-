@@ -7,7 +7,7 @@
 #define BUFFER_SIZE 1024
 #define LINE_SIZE_INITIAL 1024
 #define WORD_SIZE_INITIAL 64
-#define DICTIONARY_INITIAL_SIZE 8 // these many words (struct dictionaryTuple object for each)
+#define DICTIONARY_INITIAL_SIZE 1024 // these many words (struct dictionaryTuple object for each)
 #define INPUT_INITIAL_SIZE 1024*1024 // ~1024 lines with 1024 characters (1 million bytes / 1MB)
 #define INPUT_BUFFER_SIZE 1024*1024 // add 1024 lines per buff
 
@@ -83,9 +83,8 @@ struct dictionary * loadDictionary(char * fileName)
         } 
         struct dictionaryTuple * thisTuple = (struct dictionaryTuple*) malloc(sizeof(struct dictionaryTuple));
         thisTuple = parseLine(line);
-        //printf("%s:%s\n",thisTuple->word,thisTuple->translation);
-        theDictionary->words[theDictionary->wordCount].word = (char *) malloc(sizeof(char) * WORD_SIZE_INITIAL);
-        theDictionary->words[theDictionary->wordCount].translation = (char *) malloc(sizeof(char) * WORD_SIZE_INITIAL);
+        theDictionary->words[theDictionary->wordCount].word = (char *) malloc(sizeof(char) * WORD_SIZE_INITIAL);////////////
+        theDictionary->words[theDictionary->wordCount].translation = (char *) malloc(sizeof(char) * WORD_SIZE_INITIAL);/////////////
         strcpy(theDictionary->words[theDictionary->wordCount].word,thisTuple->word);
         strcpy(theDictionary->words[theDictionary->wordCount].translation,thisTuple->translation);
         theDictionary->wordCount++;
