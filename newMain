@@ -189,31 +189,6 @@ char * assembleNextWord(int * i, char * input, char * delims){
     return word;
 }
 
-// check if target contains capital letters
-// return 0 if no capital letters
-// return 1 if only the first character is capital
-// return 2 if all characters are capital
-int caps(char * target)
-{
-    size_t l = strlen(target);
-    int allCaps = (target[0] < 91) * 2;
-    int firstCap = (target[0] < 91);
-    for (int i = 1 ; i < l; i ++)
-    {
-        if (target[i] > 91)
-        {
-            allCaps = 0;
-        }
-        else
-        {
-            firstCap = 0;
-        }
-        
-    }
-    
-    return firstCap + allCaps;
-}
-
 char * decapitalize(char * target) /// TO BE USED ONLY WITH target CONTAINING LETTERS
 {
     size_t l = strlen(target);
@@ -224,26 +199,10 @@ char * decapitalize(char * target) /// TO BE USED ONLY WITH target CONTAINING LE
     return target;
 }
 
-char * capitalize(char * target, int cp) /// TO BE USED ONLY WITH target CONTAINING LETTERS
-{
-    size_t l = strlen(target);
-    if (cp == 2){
-        for (int i = 0 ; i < l; i ++){
-            target[i] -=  32;
-        }
-    }
-    else if (cp == 1)
-    {
-        target[0] -= 32;
-    }
-    
-    return target;
-}
-
 char * findWord(char * theWord, struct dictionary * theDictionary)
 {            
-    int capital = caps(theWord); // find if first letter is capital
-    if (capital>0){theWord = decapitalize(theWord);} // decapitalize
+    int capital = (theWord[0] < 92); // find if first letter is capital
+    theWord = decapitalize(theWord); // decapitalize
     int l = theDictionary->wordCount;
     for (int i = 0 ; i < l ; i++)
     {
@@ -252,7 +211,7 @@ char * findWord(char * theWord, struct dictionary * theDictionary)
         {
             char * found = (char *) malloc(sizeof(char) * strlen(theDictionary->words[i].translation));
             strcpy(found,theDictionary->words[i].translation);
-            if (capital>0){theWord = capitalize(found,capital);} // recapitalize
+            found[0] -= capital * 32; // recapitalize
             return found;
         }
     }
@@ -261,7 +220,7 @@ char * findWord(char * theWord, struct dictionary * theDictionary)
     notFound[0] = '<';
     notFound[1] = ' ';
     notFound[2] = '\0';
-    if (capital>0){theWord = capitalize(theWord,capital);} // recapitalize
+    notFound[2] -= capital * 32; // recapitalize
     strcat(notFound,theWord);
     strcat(notFound," >\0");
 
