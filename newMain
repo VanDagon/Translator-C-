@@ -116,6 +116,22 @@ struct dictionary * loadDictionary(char * fileName)
     return theDictionary;
 }
 
+int compare(const void *s1, const void *s2)
+{
+    struct dictionaryTuple *e1 = (struct dictionaryTuple *)s1;
+    struct dictionaryTuple *e2 = (struct dictionaryTuple *)s2;
+
+    return strcmp(e1->word,e2->word);
+}
+
+
+void qSortLibrary(struct dictionary * theDictionary)
+{
+    struct dictionaryTuple * base = &theDictionary->words[0];
+    int l = theDictionary->wordCount;
+    qsort(base, l, sizeof(struct dictionaryTuple), compare);
+}
+
 struct dictionary * loadDictionary2(char * fileName)
 {
     ssize_t read;
@@ -241,7 +257,41 @@ char * findWord(char * theWord, struct dictionary * theDictionary)
     return notFound;
 }
 
-void parseAndPrint(char * delims, struct dictionary * theDictionary)
+char * findWord2(char * theWord, struct dictionary * theDictionary)
+{           
+    int capital = (theWord[0] < 92); // find if first letter is capital
+    theWord = decapitalize(theWord); // decapitalize
+    int l = theDictionary->wordCount;
+    struct dictionaryTuple * foundTuple = (struct dictionaryTuple *) malloc(sizeof(struct dictionaryTuple));
+    foundTuple->word = (char *) malloc(sizeof(char) * 8);
+    foundTuple->translation = (char *) malloc(sizeof(char) * 8);
+    struct dictionaryTuple * base = &theDictionary->words[0];
+    
+    foundTuple = (struct dictionaryTuple *) bsearch("dtrrom", base, l, sizeof(struct dictionaryTuple), compare);
+    /*
+    if( foundTuple != NULL ) {
+        char * found = (char *) malloc(sizeof(char));
+        found[0] = '+';
+         char * found = (char *) malloc (sizeof(char) * strlen(foundTuple->translation));
+        strcpy(found,foundTuple->translation);
+        found[0] -= capital * 32; // recapitalize 
+        return found;
+    }
+
+
+    char * notFound = (char *) malloc(sizeof(char) * (5+strlen(theWord))); 
+    notFound[0] = '<';
+    notFound[1] = ' ';
+    notFound[2] = '\0';
+    notFound[2] -= capital * 32; // recapitalize
+    strcat(notFound,theWord);
+    strcat(notFound," >\0");
+
+    return notFound; */
+    return "test";
+}
+
+/* void parseAndPrint(char * delims, struct dictionary * theDictionary)
 {
     freopen( "a.txt", "w", stdout ); // stdout to file a.txt
     int charCounter = 0 ;
@@ -286,7 +336,7 @@ void parseAndPrint(char * delims, struct dictionary * theDictionary)
     }
 
     return;
-}
+} */
 
 void parseAndPrint2(char * delims, struct dictionary * theDictionary)
 {
@@ -306,7 +356,7 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
             else
             {
                 word[charCounter] = '\0'; 
-                printf("%s",findWord(word,theDictionary));       
+                printf("%s",findWord2(word,theDictionary));       
                 printf("%c",ch);
             }
             
@@ -331,7 +381,7 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
     if ((ch == EOF) && (charCounter>0)) // when the input ends with a letter before EOF
     {
         word[charCounter] = '\0';
-        printf("%s",findWord(word,theDictionary));
+        printf("%s",findWord2(word,theDictionary));
     }
 
     return;
@@ -340,8 +390,9 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
 int main() {
     struct dictionary * D1 = (struct dictionary*) malloc(sizeof(struct dictionary));
     D1 = loadDictionary2(LIBRARY_NAME);
-    printDictionary(D1);
-    //parseAndPrint2(LETTERS,D1); 
+    qSortLibrary(D1);
+    //printDictionary(D1);
+    parseAndPrint2(LETTERS,D1);
     return 0;
 }
 
