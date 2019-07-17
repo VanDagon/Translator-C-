@@ -3,10 +3,11 @@
 #include <string.h>
 
 #define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define LIBRARY_NAME "example05.wb"
+#define LIBRARY_NAME "example06.wb"
 #define BUFFER_SIZE 1024
 #define LINE_SIZE_INITIAL 1024
 #define WORD_SIZE_INITIAL 64
+#define WORD_BUFFER_SIZE 64
 #define DICTIONARY_INITIAL_SIZE 1024 // these many words (struct dictionaryTuple object for each)
 #define INPUT_INITIAL_SIZE 1024*1024 // ~1024 lines with 1024 characters (1 million bytes / 1MB)
 #define INPUT_BUFFER_SIZE 1024*1024 // add 1024 lines per buff
@@ -39,8 +40,10 @@ struct dictionaryTuple * parseLine(char * line){
     struct dictionaryTuple * thisTuple = (struct dictionaryTuple*) malloc (sizeof(struct dictionaryTuple));
 
     token = strtok(line,delims);
+    thisTuple->word = (char *) malloc(sizeof(char) * strlen(token));
     thisTuple->word = token; //replaceWord(token)
     token = strtok(NULL,delims);
+    thisTuple->translation = (char *) malloc(sizeof(char) * strlen(token));
     thisTuple->translation = token; //replaceWord(token);
 
     return thisTuple;
@@ -54,43 +57,94 @@ void buffDictionary(struct dictionary * theDictionary)
 
     if (testBuffer==NULL)
     {
-        perror("buffDictionary: failed to allocate extra memory for dictionary");
+        perror("\n\nbuffDictionary: failed to allocate extra memory for dictionary, exiting\n\n");
+        exit(-1);
     }
     else
     {
         theDictionary->words = testBuffer;
-        theDictionary->allocatedSize+= WORD_SIZE_INITIAL;
+        theDictionary->allocatedSize+= BUFFER_SIZE;
         //printf("Dictionary successfully buffed to %d words\n",theDictionary->allocatedSize);
+    }
+}
+
+void buffLine(char * line, int buffSize)
+{
+    char * testBuffer = (char *) realloc (line,sizeof(char) * buffSize);
+
+    if (testBuffer == NULL)
+    {
+        perror("\n\nbuffLine: realloc failed to find memory for line, exiting\n\n");
+        exit(-1);
+    }
+    else
+    {
+        line = testBuffer;
     }
 }
 
 struct dictionary * loadDictionary(char * fileName)
 {
     size_t read;
-    size_t len;
-    char * line = (char *) malloc(sizeof(char) * LINE_SIZE_INITIAL);
+    size_t len = 0;
+    char * line = NULL;
     FILE * f;
 
     struct dictionary * theDictionary = initDictionary();
 
     f = fopen(fileName,"r");
-    // if (read > sizeof(line)) {buffLine(line);}//////////////
     while ((read = getline(&line, &len, f)) != -1)
     {
+        //if (len > LINE_SIZE_INITIAL) {buffLine(line,len);}
         if (theDictionary->wordCount>=theDictionary->allocatedSize)
         {
             buffDictionary(theDictionary);
         } 
         struct dictionaryTuple * thisTuple = (struct dictionaryTuple*) malloc(sizeof(struct dictionaryTuple));
         thisTuple = parseLine(line);
-        theDictionary->words[theDictionary->wordCount].word = (char *) malloc(sizeof(char) * WORD_SIZE_INITIAL);////////////
-        theDictionary->words[theDictionary->wordCount].translation = (char *) malloc(sizeof(char) * WORD_SIZE_INITIAL);/////////////
+        theDictionary->words[theDictionary->wordCount].word = (char *) 
+            malloc(sizeof(char) * strlen(thisTuple->word));////////////
+        theDictionary->words[theDictionary->wordCount].translation = (char *) 
+            malloc(sizeof(char) * strlen(thisTuple->translation));/////////////
         strcpy(theDictionary->words[theDictionary->wordCount].word,thisTuple->word);
         strcpy(theDictionary->words[theDictionary->wordCount].translation,thisTuple->translation);
         theDictionary->wordCount++;
         free(thisTuple);
     } 
 
+    fclose(f);
+    return theDictionary;
+}
+
+struct dictionary * loadDictionary2(char * fileName)
+{
+    ssize_t read;
+    size_t len = 0;
+    char * line = NULL;
+    FILE * f;
+
+    struct dictionary * theDictionary = initDictionary();
+    f = fopen(fileName,"r");
+    while ((read = getline(&line, &len, f)) != -1)
+    {       
+        if (theDictionary->wordCount>=theDictionary->allocatedSize)
+        {
+            buffDictionary(theDictionary);
+        } 
+        //if (len > LINE_SIZE_INITIAL) {buffLine(line,len);}
+        struct dictionaryTuple * thisTuple = (struct dictionaryTuple*) malloc(sizeof(struct dictionaryTuple));
+        thisTuple = parseLine(line);
+        theDictionary->words[theDictionary->wordCount].word = (char *) 
+            malloc(sizeof(char) * strlen(thisTuple->word));////////////
+        theDictionary->words[theDictionary->wordCount].translation = (char *) 
+            malloc(sizeof(char) * strlen(thisTuple->translation));/////////////
+        strcpy(theDictionary->words[theDictionary->wordCount].word,thisTuple->word);
+        strcpy(theDictionary->words[theDictionary->wordCount].translation,thisTuple->translation);
+        theDictionary->wordCount++;
+        free(thisTuple);
+    }
+
+    free(line);
     fclose(f);
     return theDictionary;
 }
@@ -125,10 +179,10 @@ int buffInputString(char * inputString, int currentSize)
     return newSize;    
 } 
 
-int buffWord(char * word, int currentSize)
+int buffWord(char * word, int currentSize, int goalSize)
 {
     int newSize = currentSize;
-    char * testBuffer = (char *) realloc(word, currentSize + BUFFER_SIZE);
+    char * testBuffer = (char *) realloc(word, goalSize);
 
     if (testBuffer==NULL)
     {
@@ -137,7 +191,7 @@ int buffWord(char * word, int currentSize)
     else
     {
         word = testBuffer;
-        newSize+= BUFFER_SIZE;
+        newSize = goalSize;
     }
 
     return newSize; 
@@ -211,14 +265,63 @@ void parseAndPrint(char * delims, struct dictionary * theDictionary)
             
             charCounter = 0;
             strcpy(word,"");
-            // realloc with 1 byte
+            
         }
         else
         {
             word[charCounter++] = ch;
             if (charCounter>allocatedSize) // realloc more bytes for word if needed
             {
-                allocatedSize = buffWord(word,allocatedSize);
+                allocatedSize = buffWord(word,allocatedSize,allocatedSize+WORD_BUFFER_SIZE);
+            }
+
+        }
+    
+    }
+
+    if ((ch == EOF) && (charCounter>0)) // when the input ends with a letter before EOF
+    {
+        word[charCounter] = '\0';
+        printf("%s",findWord(word,theDictionary));
+    }
+
+    return;
+}
+
+void parseAndPrint2(char * delims, struct dictionary * theDictionary)
+{
+    freopen( "a.txt", "w", stdout ); // stdout to file a.txt
+    int charCounter = 0 ;
+    char ch;
+    char * word = (char * ) malloc(sizeof(char) * WORD_SIZE_INITIAL);
+    int allocatedSize = WORD_SIZE_INITIAL;
+
+    while ((ch = getc(stdin)) != EOF){
+        if (!checkChar(ch,delims))
+        {
+            if (charCounter==0)
+            {
+                printf("%c",ch);
+            }
+            else
+            {
+                word[charCounter] = '\0'; 
+                printf("%s",findWord(word,theDictionary));       
+                printf("%c",ch);
+            }
+            
+            charCounter = 0;
+            strcpy(word,"");
+        }
+        else
+        {
+            word[charCounter] = ch;
+            charCounter++;
+            if (charCounter>=allocatedSize) // realloc more bytes for word if needed
+            {
+                //allocatedSize = buffWord(word,allocatedSize,allocatedSize+WORD_BUFFER_SIZE);
+                word = (char *) realloc(word,allocatedSize+WORD_BUFFER_SIZE);
+                allocatedSize += WORD_BUFFER_SIZE;
             }
 
         }
@@ -236,8 +339,9 @@ void parseAndPrint(char * delims, struct dictionary * theDictionary)
 
 int main() {
     struct dictionary * D1 = (struct dictionary*) malloc(sizeof(struct dictionary));
-    D1 = loadDictionary(LIBRARY_NAME);
-    parseAndPrint(LETTERS,D1); 
+    D1 = loadDictionary2(LIBRARY_NAME);
+    printDictionary(D1);
+    //parseAndPrint2(LETTERS,D1); 
     return 0;
 }
 
