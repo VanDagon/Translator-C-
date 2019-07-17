@@ -40,11 +40,14 @@ struct dictionaryTuple * parseLine(char * line){
     struct dictionaryTuple * thisTuple = (struct dictionaryTuple*) malloc (sizeof(struct dictionaryTuple));
 
     token = strtok(line,delims);
-    thisTuple->word = (char *) malloc(sizeof(char) * strlen(token));
+    thisTuple->word = (char *) malloc(sizeof(char) * strlen(token)+1);
     thisTuple->word = token; //replaceWord(token)
+    //thisTuple->word[sizeof(char) * strlen(token)] = '\0' ; //// ???
     token = strtok(NULL,delims);
-    thisTuple->translation = (char *) malloc(sizeof(char) * strlen(token));
+    thisTuple->translation = (char *) malloc(sizeof(char) * strlen(token)+1);
     thisTuple->translation = token; //replaceWord(token);
+    //thisTuple->translation[sizeof(char) * strlen(token)] = '\0' ; //// ???
+
 
     return thisTuple;
 }
@@ -262,33 +265,40 @@ char * findWord2(char * theWord, struct dictionary * theDictionary)
     int capital = (theWord[0] < 92); // find if first letter is capital
     theWord = decapitalize(theWord); // decapitalize
     int l = theDictionary->wordCount;
-    struct dictionaryTuple * foundTuple = (struct dictionaryTuple *) malloc(sizeof(struct dictionaryTuple));
-    foundTuple->word = (char *) malloc(sizeof(char) * 8);
-    foundTuple->translation = (char *) malloc(sizeof(char) * 8);
-    struct dictionaryTuple * base = &theDictionary->words[0];
-    
-    foundTuple = (struct dictionaryTuple *) bsearch("dtrrom", base, l, sizeof(struct dictionaryTuple), compare);
-    /*
-    if( foundTuple != NULL ) {
-        char * found = (char *) malloc(sizeof(char));
-        found[0] = '+';
-         char * found = (char *) malloc (sizeof(char) * strlen(foundTuple->translation));
+/*     struct dictionaryTuple * foundTuple = (struct dictionaryTuple *) malloc(sizeof(struct dictionaryTuple));
+    foundTuple->word = (char *) malloc(sizeof(char) * 64);
+    foundTuple->translation = (char *) malloc(sizeof(char) * 64); */
+    struct dictionaryTuple key; //= (struct dictionaryTuple *) malloc(sizeof(struct dictionaryTuple));
+    key.word = theWord;
+    //struct dictionaryTuple * base = &theDictionary->words[0];
+    //printf("WORDTOBEFOUND:%s||| ",theWord);
+
+    struct dictionaryTuple * foundTuple = (struct dictionaryTuple *) bsearch(&key, theDictionary->words, l, sizeof(struct dictionaryTuple), compare);
+    //printf("ADDRESFOUND%pEND",&foundTuple);
+    //if (foundTuple!= NULL) {printf("FOUND%sEND",foundTuple->word);}
+
+
+     if( foundTuple != NULL ) {
+        //char * found = (char *) malloc(sizeof(char)*64);
+        //found[0] = 'A';
+        char * found = (char *) malloc (sizeof(char) * strlen(foundTuple->translation));
         strcpy(found,foundTuple->translation);
-        found[0] -= capital * 32; // recapitalize 
+        found[0] -= capital * 32; // recapitalize  
         return found;
     }
 
 
     char * notFound = (char *) malloc(sizeof(char) * (5+strlen(theWord))); 
     notFound[0] = '<';
-    notFound[1] = ' ';
-    notFound[2] = '\0';
-    notFound[2] -= capital * 32; // recapitalize
+    notFound[1] = '\0';
     strcat(notFound,theWord);
-    strcat(notFound," >\0");
+    strcat(notFound,">\0"); 
+    notFound[1] -= capital * 32; // recapitalize
+ 
+    //return notFound; 
 
-    return notFound; */
-    return "test";
+
+    return notFound;
 }
 
 /* void parseAndPrint(char * delims, struct dictionary * theDictionary)
