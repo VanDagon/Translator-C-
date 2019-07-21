@@ -101,6 +101,7 @@ char * readNextWord(FILE * f, dictionary * theDictionary)
         if (ch==EOF)
         {
             theDictionary->dictionaryRead = 1;
+            free(read);
             return NULL;
         }
 
@@ -206,7 +207,7 @@ dictionaryTuple ** reallocDictionary(dictionary * theDictionary, int targetSize)
     free(theDictionary->list);
 
     return testBuffer;
-}  
+}
 
 dictionary * loadDictionary(char * fileName)
 {
@@ -244,10 +245,12 @@ dictionary * loadDictionary(char * fileName)
 
 void printDictionary(dictionary * theDictionary)
 {
-    for (int i = 0; i < theDictionary->wordCount; i ++)
+    for (int i = 0; i < theDictionary->wordCount-1; i ++)
     {
         printf("%s:%s\n",theDictionary->list[i]->word,theDictionary->list[i]->translation);
     }
+    printf("%s:%s",theDictionary->list[theDictionary->wordCount-1]->word,theDictionary->list[theDictionary->wordCount-1]->translation);
+
 }
 
 int main() {
