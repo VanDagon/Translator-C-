@@ -2,9 +2,9 @@
 
 WORK IN PROGRESS
 
-Basic translator using demo.wb as dictionary. 
+Basic translator.
 
-Takes input through stdin, replaces every word with the corresponding word in another language using demo.wb dictionary.
+Takes input through stdin, replaces every word with the corresponding word in another language using .wb dictionary.
 Gives the output in stdout.
 
 TO DOs:
