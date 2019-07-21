@@ -1,0 +1,261 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ALLOCATION_ERROR 2
+#define SYNTAX_ERROR_LIBRARY 3
+#define SYNTAX_ERROR_INPUT 4
+
+#define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+#define DICTIONARY_NAME "example06.wb" 
+
+#define DICTIONARY_INITIAL_SIZE 1
+#define DICTIONARY_BUFFER 64
+
+#define WORD_SIZE_INITIAL sizeof(char) *32
+#define WORD_BUFFER sizeof(char) *512
+
+#define WHITESPACE_CHARACTERS " \n"
+
+struct dictionaryTuple{
+    char * word;
+    char * translation;
+};
+typedef struct dictionaryTuple dictionaryTuple;
+
+struct dictionary{
+    int wordCount;
+    int allocatedSize;
+    dictionaryTuple ** list;
+    int dictionaryRead;
+};
+typedef struct dictionary dictionary;
+
+dictionary * initDictionary()
+{
+    dictionary * theDictionary = (dictionary *) malloc(sizeof(dictionary));
+    theDictionary->wordCount = 0;
+    theDictionary->dictionaryRead = 0;
+    
+    theDictionary->list = (dictionaryTuple**) malloc(DICTIONARY_INITIAL_SIZE * sizeof(dictionaryTuple*));
+    theDictionary->allocatedSize = DICTIONARY_INITIAL_SIZE;
+
+    for (int i = 0 ; i < DICTIONARY_INITIAL_SIZE; i ++)
+    {
+        theDictionary->list[i] = (dictionaryTuple *) malloc(sizeof(dictionaryTuple));
+        //theDictionary->list[i]->word = (char *) malloc(WORD_SIZE_INITIAL);
+        //theDictionary->list[i]->translation = (char *) malloc(WORD_SIZE_INITIAL);
+    } 
+
+    return theDictionary;
+}
+
+int checkChar(char c, char * delims) // checks if char 'c' is a separator
+{
+    return (strchr(delims,c)!=NULL); // strchr returns NULL if 'c' is not found in 'delims'
+    // returns 1 if c is in delims, 0 otherwie
+}
+
+void freeDictionary(dictionary * theDictionary)
+{
+
+    for (int i = 0; i <theDictionary->wordCount; i ++)
+    {
+        free(theDictionary->list[i]->word);
+        free(theDictionary->list[i]->translation);
+        free(theDictionary->list[i]);
+    }
+    free(theDictionary->list);
+    free(theDictionary);
+}
+
+char * safeRealloc(char * target, int targetSize, dictionary * theDictionary)
+{
+    char * testBuffer = (char *) realloc(target,(sizeof(char)*targetSize));
+    if (testBuffer == NULL)
+    {
+        perror("[safeRealloc]: failed to reallocate target. exiting...");
+        freeDictionary(theDictionary);
+        exit(ALLOCATION_ERROR);
+    }
+    else
+    {
+        return testBuffer;
+    }
+}
+
+char * readNextWord(FILE * f, dictionary * theDictionary)
+{
+    char ch;
+    char * read = (char *) malloc(WORD_SIZE_INITIAL);
+    int allocatedSize = WORD_SIZE_INITIAL;
+    int charCounter = 0;
+    int charCondition;
+
+    while (1)
+    {   
+        ch = fgetc(f);
+        charCondition = (((ch==10) || (ch>126)) || ((ch<32) || (ch=='\n')));
+
+        if (ch==EOF)
+        {
+            theDictionary->dictionaryRead = 1;
+            return NULL;
+        }
+
+        if (charCondition)
+        {
+            perror("[readNextWord]: invalid format in dictionary. exiting...");
+            free(read);
+            freeDictionary(theDictionary);
+            exit(SYNTAX_ERROR_LIBRARY);
+        }
+        else if (ch == ':')
+        {   
+            read[charCounter] = '\0';
+            read = safeRealloc(read,strlen(read)+1,theDictionary);
+            return read;
+        }
+        else
+        {
+            if (charCounter>=allocatedSize)
+            {
+                read = safeRealloc(read,allocatedSize+WORD_BUFFER,theDictionary);
+                allocatedSize+=WORD_BUFFER;
+            }
+            read[charCounter++] = ch;   
+        }
+        
+    }
+
+    return read;
+}
+
+char * readNextTranslation(FILE * f, dictionary * theDictionary)
+{
+    char ch;
+    char * read = (char *) malloc(WORD_SIZE_INITIAL);
+    int allocatedSize = WORD_SIZE_INITIAL;
+    int charCounter = 0;
+    int charCondition; 
+
+    while (1)
+    {   
+        ch = fgetc(f);
+        charCondition = ( (ch>126) || (ch<32) );
+
+        if (ch==EOF)
+        {
+            theDictionary->dictionaryRead = 1;
+            read[charCounter] = '\0';
+            return read;
+        }
+        else if (ch == '\n')
+        {   
+            read[charCounter] = '\0';
+            read = safeRealloc(read,strlen(read)+1,theDictionary);
+            return read;
+        }
+        else if (charCondition)
+        {
+            free(read);
+            perror("[readNextTranslation]: invalid format in dictionary. exiting...");
+            freeDictionary(theDictionary);
+            exit(SYNTAX_ERROR_LIBRARY);
+        }
+        else
+        {
+            if (charCounter>=allocatedSize)
+            {
+                read = safeRealloc(read,allocatedSize+WORD_BUFFER,theDictionary);
+                allocatedSize+=WORD_BUFFER;
+            }
+            read[charCounter++] = ch;   
+        }
+        
+    }
+
+    return read;
+}
+
+dictionaryTuple ** reallocDictionary(dictionary * theDictionary, int targetSize)
+{
+    dictionaryTuple ** testBuffer = (dictionaryTuple **) malloc(sizeof(dictionaryTuple*) * targetSize);
+
+    if (targetSize < theDictionary->allocatedSize)
+    {
+        for (int i = targetSize; i < theDictionary->allocatedSize; i ++)
+        {
+            free(theDictionary->list[i]);
+        }
+    }
+
+    for (int i = 0 ; i < targetSize; i ++)
+    {
+        testBuffer[i] = (dictionaryTuple*) malloc(sizeof(dictionaryTuple));
+    }
+
+    for (int i = 0 ; i < theDictionary->wordCount; i++)
+    {
+        testBuffer[i]->word = theDictionary->list[i]->word;
+        testBuffer[i]->translation = theDictionary->list[i]->translation;
+        free(theDictionary->list[i]);
+    }
+
+    free(theDictionary->list);
+
+    return testBuffer;
+}  
+
+dictionary * loadDictionary(char * fileName)
+{
+    FILE * f = fopen(fileName,"r");
+    dictionary * theDictionary = initDictionary();
+
+    while (theDictionary->dictionaryRead==0)
+    {
+        if (theDictionary->wordCount>=theDictionary->allocatedSize)
+        {
+            theDictionary->list = reallocDictionary(theDictionary,theDictionary->allocatedSize*2);
+            theDictionary->allocatedSize *= 2;
+        }
+
+        //free(theDictionary->list[theDictionary->wordCount]->word);
+        //free(theDictionary->list[theDictionary->wordCount]->translation);
+
+        theDictionary->list[theDictionary->wordCount]->word = readNextWord(f,theDictionary);
+
+        if (theDictionary->list[theDictionary->wordCount]->word == NULL)
+        {
+            
+            break;
+        }
+
+        theDictionary->list[theDictionary->wordCount]->translation = readNextTranslation(f,theDictionary);
+        theDictionary->wordCount++;
+    } 
+
+    theDictionary->list = reallocDictionary(theDictionary,theDictionary->wordCount);
+
+    fclose(f);
+    return theDictionary;
+} 
+
+void printDictionary(dictionary * theDictionary)
+{
+    for (int i = 0; i < theDictionary->wordCount; i ++)
+    {
+        printf("%s:%s\n",theDictionary->list[i]->word,theDictionary->list[i]->translation);
+    }
+}
+
+int main() {
+    dictionary * D1;
+    D1 = loadDictionary(DICTIONARY_NAME);
+    //printDictionary(D1);
+    freeDictionary(D1);
+
+    return 0;
+}
+
