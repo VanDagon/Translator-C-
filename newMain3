@@ -10,8 +10,8 @@
 
 #define DICTIONARY_NAME "example06.wb" 
 
-#define DICTIONARY_INITIAL_SIZE 1
-#define DICTIONARY_BUFFER 64
+#define DICTIONARY_INITIAL_SIZE 64
+#define DICTIONARY_BUFFER 1024
 
 #define WORD_SIZE_INITIAL sizeof(char) *32
 #define WORD_BUFFER sizeof(char) *512
@@ -180,10 +180,8 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
     return read;
 }
 
-dictionaryTuple ** reallocDictionary(dictionary * theDictionary, int targetSize)
+dictionary * reallocDictionary(dictionary * theDictionary, int targetSize)
 {
-    dictionaryTuple ** testBuffer = (dictionaryTuple **) malloc(sizeof(dictionaryTuple*) * targetSize);
-
     if (targetSize < theDictionary->allocatedSize)
     {
         for (int i = targetSize; i < theDictionary->allocatedSize; i ++)
@@ -192,21 +190,30 @@ dictionaryTuple ** reallocDictionary(dictionary * theDictionary, int targetSize)
         }
     }
 
-    for (int i = 0 ; i < targetSize; i ++)
+    dictionaryTuple ** testBuffer = (dictionaryTuple **) realloc(theDictionary->list,sizeof(dictionaryTuple*) * targetSize);
+
+    if (testBuffer == NULL)
     {
-        testBuffer[i] = (dictionaryTuple*) malloc(sizeof(dictionaryTuple));
+        perror("[reallocDictionary]: failed to reallocate theDictionary->list. exiting...");
+        freeDictionary(theDictionary);
+        exit(ALLOCATION_ERROR);
     }
 
-    for (int i = 0 ; i < theDictionary->wordCount; i++)
+    theDictionary->list = testBuffer;
+
+    for (int i = 0; i < theDictionary->wordCount-1; i ++)
     {
-        testBuffer[i]->word = theDictionary->list[i]->word;
-        testBuffer[i]->translation = theDictionary->list[i]->translation;
-        free(theDictionary->list[i]);
+        testBuffer[i] = theDictionary->list[i];
     }
 
-    free(theDictionary->list);
+    for (int i = theDictionary->wordCount; i<targetSize; i ++)
+    {
+        theDictionary->list[i] = (dictionaryTuple*) malloc(sizeof(dictionaryTuple));
+    } 
 
-    return testBuffer;
+    theDictionary->allocatedSize = targetSize;
+
+    return theDictionary;
 }
 
 dictionary * loadDictionary(char * fileName)
@@ -218,18 +225,14 @@ dictionary * loadDictionary(char * fileName)
     {
         if (theDictionary->wordCount>=theDictionary->allocatedSize)
         {
-            theDictionary->list = reallocDictionary(theDictionary,theDictionary->allocatedSize*2);
-            theDictionary->allocatedSize *= 2;
+            theDictionary = reallocDictionary(theDictionary,theDictionary->allocatedSize*2);
         }
-
-        //free(theDictionary->list[theDictionary->wordCount]->word);
-        //free(theDictionary->list[theDictionary->wordCount]->translation);
 
         theDictionary->list[theDictionary->wordCount]->word = readNextWord(f,theDictionary);
 
         if (theDictionary->list[theDictionary->wordCount]->word == NULL)
         {
-            
+            // ???
             break;
         }
 
@@ -237,7 +240,9 @@ dictionary * loadDictionary(char * fileName)
         theDictionary->wordCount++;
     } 
 
-    theDictionary->list = reallocDictionary(theDictionary,theDictionary->wordCount);
+
+    ////////////////////////////
+    theDictionary = reallocDictionary(theDictionary,theDictionary->wordCount);
 
     fclose(f);
     return theDictionary;
@@ -257,8 +262,20 @@ int main() {
     dictionary * D1;
     D1 = loadDictionary(DICTIONARY_NAME);
     //printDictionary(D1);
-    freeDictionary(D1);
+    freeDictionary(D1); 
 
+/*     dictionaryTuple * D1 = (dictionaryTuple *) malloc(sizeof(dictionaryTuple));
+    //char * word1 = "word1";
+    char * tran1 = "tran1";
+    D1[0].word = (char *) malloc(8);
+    D1[0].translation = tran1;
+    D1 = (dictionaryTuple*) realloc(D1,2*sizeof(dictionaryTuple));
+    char * word2 = "word2eaffae";
+    char * tran2 = "tran2";   
+    D1[1].word = word2;
+    D1[1].translation = tran2;
+    printf("%s:%s",D1[0].word,D1[1].translation);
+    free(D1); */
     return 0;
 }
 
