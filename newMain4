@@ -289,9 +289,10 @@ char * findWord2(char * theWord, struct dictionary * theDictionary)
 
     if( foundTuple != NULL ) {
 
-        char * found = (char *) malloc (sizeof(char) * strlen(foundTuple->translation));
-        strcpy(found,foundTuple->translation);
-        found[0] -= capital * 32; // recapitalize  
+        char * found = (char *) malloc (sizeof(char) * strlen(foundTuple->translation)+1);
+        //strcpy(found,foundTuple->translation);
+        found[0] = '\0';
+        strcat(found,foundTuple->translation);  
         return found;
     }  
 
@@ -312,6 +313,7 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
     int charCounter = 0 ;
     char ch;
     char * word = (char * ) malloc(sizeof(char) * WORD_SIZE_INITIAL);
+    char * t1;
     int allocatedSize = WORD_SIZE_INITIAL; 
 
     while ((ch = getc(stdin)) != EOF){
@@ -325,7 +327,9 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
             else
             {
                 word[charCounter] = '\0'; 
-                printf("%s",findWord2(word,theDictionary));       
+                t1 = findWord2(word,theDictionary);
+                printf("%s",t1);
+                free(t1);       
                 printf("%c",ch);
             }
             
@@ -354,7 +358,9 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
     if ((ch == EOF) && (charCounter>0)) // when the input ends with a letter before EOF
     {
         word[charCounter] = '\0';
-        printf("%s",findWord2(word,theDictionary));
+        t1 = findWord2(word,theDictionary);
+        printf("%s",t1);
+        free(t1);
     }
 
     free(word);
