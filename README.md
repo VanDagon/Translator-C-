@@ -9,7 +9,7 @@ Gives the output in stdout.
 
 TO DOs:
 1. write comments
-2. +
+2. rename functions
 3. +
 4. +
 5. +
