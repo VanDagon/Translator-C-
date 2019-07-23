@@ -15,3 +15,4 @@ TO DOs:
 5. change name to "loesung.c"
 6. remove 'struct' keywords
 7. fix EOF error
+8. remove ByteCounter
