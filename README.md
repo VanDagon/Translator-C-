@@ -18,3 +18,6 @@ TO DOs:
 8. remove ByteCounter
 9. optimize memory size
 10. test with different ulimits (-d und -s). find stack usage.
+
+-- try to malloc individual extra dictionaryTuples
+-- does bsearch use less than linear time
