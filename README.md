@@ -14,3 +14,4 @@ TO DOs:
 4. example02.stdout has words printed in full caps (contrary to documentation)
 5. change name to "loesung.c"
 6. remove 'struct' keywords
+7. fix EOF error
