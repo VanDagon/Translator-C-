@@ -5,12 +5,12 @@
 #define ALLOCATION_ERROR 2
 #define SYNTAX_ERROR_LIBRARY 3
 #define SYNTAX_ERROR_INPUT 4
+#define DUPLICATE_FOUND 5
+#define NO_DICTIONARY_PATH 6
 
 #define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-#define DICTIONARY_NAME "example03.wb" 
-
-#define DICTIONARY_INITIAL_SIZE 32
+#define DICTIONARY_INITIAL_SIZE 1024
 
 #define WORD_SIZE_INITIAL 32
 
@@ -93,7 +93,9 @@ char * readNextWord(FILE * f, dictionary * theDictionary)
     while (1)
     {   
         ch = fgetc(f);
-        charCondition = (((ch==10) || (ch>126)) || ((ch<32) || (ch=='\n')));
+        
+
+        charCondition = ((((ch==10) || (ch>126)) || ((ch<32) || (ch=='\n'))) || ((ch==':') && (charCounter==0)) );
 
         if (ch==EOF)
         {
@@ -104,11 +106,12 @@ char * readNextWord(FILE * f, dictionary * theDictionary)
 
         if (charCondition)
         {
-            perror("[readNextWord]: invalid format in dictionary. exiting...");
             free(read);
             freeDictionary(theDictionary);
+            fprintf(stderr,"[readNextWord]: invalid format in dictionary. exiting...");
             exit(SYNTAX_ERROR_LIBRARY);
         }
+
         else if (ch == ':')
         {   
             read[charCounter] = '\0';
@@ -142,16 +145,28 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
     while (1)
     {   
         ch = fgetc(f);
-        charCondition = ( (ch>126) || (ch<32) );
+        charCondition = (( (ch>126) || (ch<32) ) || (ch == ':'));
 
         if (ch==EOF)
         {
+            if (charCounter==0){
+                free(read);
+                fprintf(stderr,"[readNextTranslation]: invalid format in dictionary. exiting...");
+                freeDictionary(theDictionary);
+                exit(SYNTAX_ERROR_LIBRARY);
+            }
             theDictionary->dictionaryRead = 1;
             read[charCounter] = '\0';
             return read;
         }
         else if (ch == '\n')
         {   
+            if (charCounter==0){
+                free(read);
+                fprintf(stderr,"[readNextTranslation]: invalid format in dictionary. exiting...");
+                freeDictionary(theDictionary);
+                exit(SYNTAX_ERROR_LIBRARY);
+            }
             read[charCounter] = '\0';
             read = safeRealloc(read,strlen(read)+1,theDictionary);
             return read;
@@ -159,7 +174,7 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
         else if (charCondition)
         {
             free(read);
-            perror("[readNextTranslation]: invalid format in dictionary. exiting...");
+            fprintf(stderr,"[readNextTranslation]: invalid format in dictionary. exiting...");
             freeDictionary(theDictionary);
             exit(SYNTAX_ERROR_LIBRARY);
         }
@@ -216,16 +231,18 @@ dictionary * loadDictionary(char * fileName)
 
     while (theDictionary->dictionaryRead==0)
     {
+        
         if (theDictionary->wordCount>=theDictionary->allocatedSize)
         {
             theDictionary = reallocDictionary(theDictionary,theDictionary->allocatedSize*2);
+
         }
 
         theDictionary->list[theDictionary->wordCount].word = readNextWord(f,theDictionary);
 
         if (theDictionary->list[theDictionary->wordCount].word == NULL)
         {
-            // ???
+            
             break;
         }
 
@@ -262,6 +279,20 @@ void qSortLibrary(struct dictionary * theDictionary)
     struct dictionaryTuple * base = &theDictionary->list[0];
     int l = theDictionary->wordCount;
     qsort(base, l, sizeof(struct dictionaryTuple), compare);
+}
+
+// this should be used on sorted dictionary so that duplicates are next to each other
+void checkForDuplicate(dictionary * theDictionary) 
+{
+    for (int i = 0; i < theDictionary->wordCount-1; i ++)
+    {
+        if (!strcmp(theDictionary->list[i].word,theDictionary->list[i+1].word))
+        {
+            freeDictionary(theDictionary);
+            fprintf(stderr,"[checkForDuplicate]: a duplicate word has been detected in  the dictionary. exiting...");
+            exit(DUPLICATE_FOUND);
+        }
+    }
 }
 
 char * decapitalize(char * target) /// TO BE USED ONLY WITH target CONTAINING LETTERS OF ASCII
@@ -368,11 +399,19 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
 }
 
 
-int main() {
-    dictionary * D1 = loadDictionary(DICTIONARY_NAME);
+int main(int argc, char ** argv) {
+    if (argc==1)
+    {
+        fprintf(stderr,"dictionary path missing. exiting...");
+        exit(NO_DICTIONARY_PATH);
+    }
+    dictionary * D1 = loadDictionary(argv[1]);
     //printf("%lu\n",ByteCounter+1024);
+
     qSortLibrary(D1);
+    checkForDuplicate(D1);
     //printDictionary(D1);
+    if (D1->wordCount==0){exit(EXIT_SUCCESS);}
     parseAndPrint2(LETTERS,D1);
     freeDictionary(D1); 
 
