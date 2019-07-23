@@ -366,9 +366,10 @@ char * decapitalize(char * target) /// TO BE USED ONLY WITH target CONTAINING LE
 }
 
 char * findWord2(char * theWord, dictionary * theDictionary, int * wordNotFound)
-{           
-    //char * theWord = (char *) safeMalloc(strlen(initialWord)+1,theDictionary);
-    //strcpy(theWord,initialWord);
+{    
+    size_t ll = strlen(theWord)+1;
+    char * copyWord = (char *) safeMalloc(ll+1, theDictionary);
+    strcpy(copyWord,theWord);
     int capital = (theWord[0] < 92); // find if first letter is capital
     theWord = decapitalize(theWord); // decapitalize
     int l = theDictionary->wordCount;
@@ -379,24 +380,27 @@ char * findWord2(char * theWord, dictionary * theDictionary, int * wordNotFound)
     dictionaryTuple * foundTuple = (dictionaryTuple *) bsearch(&key, theDictionary->list, l, sizeof(dictionaryTuple), compare);
 
     if( foundTuple != NULL ) {
-
-        char * found = (char *) safeMalloc (strlen(foundTuple->translation)+1,theDictionary);
+        //fprintf(stderr,"%zu\n", GetFreeSize());
+        
+        char * found = (char *) safeMalloc (strlen(foundTuple->translation)+1,theDictionary); 
+        
         //strcpy(found,foundTuple->translation);
         found[0] = '\0';
         strcat(found,foundTuple->translation);  
         found[0] -= 32 * (capital);
-        
+        free(copyWord);
         return found;
     }  
 
-    char * notFound = (char *) safeMalloc(5+strlen(theWord),theDictionary); 
+    
+    char * notFound = (char *) safeMalloc(5+strlen(theWord),theDictionary);
     notFound[0] = '<';
     notFound[1] = '\0';
-    strcat(notFound,theWord);
+    strcat(notFound,copyWord);
     strcat(notFound,">\0");  
     //notFound[1] -= capital * 32; // recapitalize 
     if (*wordNotFound != 1) {*wordNotFound = 1;}
-    free(theWord);
+    free(copyWord);
     return notFound;
 
 }
