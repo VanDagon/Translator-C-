@@ -11,10 +11,10 @@ TO DOs:
 1. write comments
 2. +
 3. +
-4. example02.stdout has words printed in full caps (contrary to documentation)
+4. +
 5. change name to "loesung.c"
 6. +
-7. fix EOF error
+7. +
 8. +
 9. optimize memory size
 10. test with different ulimits (-d und -s). find stack usage.
