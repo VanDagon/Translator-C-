@@ -22,3 +22,5 @@ TO DOs:
 -- try to malloc individual extra dictionaryTuples
 
 -- does bsearch use less than linear time
+
+-- make ch int?
