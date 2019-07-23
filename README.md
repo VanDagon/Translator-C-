@@ -12,7 +12,7 @@ TO DOs:
 2. +
 3. +
 4. +
-5. change name to "loesung.c"
+5. +
 6. +
 7. +
 8. +
