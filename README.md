@@ -8,20 +8,18 @@ Takes input through stdin, replaces every word with the corresponding word in an
 Gives the output in stdout.
 
 TO DOs:
-1. replace malloc with SafeMalloc
-2. write switch for error output
+1. write comments
+2. +
 3. check for empty input
 4. example02.stdout has words printed in full caps (contrary to documentation)
 5. change name to "loesung.c"
-6. remove 'struct' keywords
+6. +
 7. fix EOF error
-8. remove ByteCounter
+8. +
 9. optimize memory size
 10. test with different ulimits (-d und -s). find stack usage.
 11. check input for invalid characters
 
 -- try to malloc individual extra dictionaryTuples
-
--- does bsearch use less than linear time
 
 -- make ch int?
