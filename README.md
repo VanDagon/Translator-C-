@@ -23,3 +23,5 @@ TO DOs:
 -- try to malloc individual extra dictionaryTuples
 
 -- make ch int?
+
+-- enums for error codes
