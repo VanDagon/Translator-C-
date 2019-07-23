@@ -11,7 +11,7 @@
 
 #define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-#define DICTIONARY_INITIAL_SIZE 1024
+#define DICTIONARY_INITIAL_SIZE 64
 
 #define WORD_SIZE_INITIAL 32
 
@@ -196,10 +196,6 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
 
 dictionary * reallocDictionary(dictionary * theDictionary, int targetSize)
 {
-    if (targetSize==0)
-    {
-        targetSize = 1;
-    }
 
     dictionaryTuple * testBuffer = (dictionaryTuple *) realloc(theDictionary->list,sizeof(dictionaryTuple) * targetSize);
 
@@ -257,7 +253,10 @@ dictionary * loadDictionary(char * fileName)
         theDictionary->wordCount++;
     } 
 
-    theDictionary = reallocDictionary(theDictionary,theDictionary->wordCount);
+    if (theDictionary->wordCount>0)
+    {
+        theDictionary = reallocDictionary(theDictionary,theDictionary->wordCount);
+    }
 
     fclose(f);
     return theDictionary;
@@ -331,6 +330,7 @@ char * findWord2(char * theWord, struct dictionary * theDictionary, int * wordNo
         //strcpy(found,foundTuple->translation);
         found[0] = '\0';
         strcat(found,foundTuple->translation);  
+        found[0] -= 32 * (capital);
         return found;
     }  
 
@@ -420,9 +420,12 @@ int main(int argc, char ** argv) {
     qSortLibrary(D1);
     checkForDuplicate(D1);
     //printDictionary(D1);
-    if (D1->wordCount==0){exit(EXIT_SUCCESS);}
+    if (D1->wordCount==0){
+        freeDictionary(D1);
+        exit(EXIT_SUCCESS);
+        }
     wordNotFound = parseAndPrint2(LETTERS,D1);
-    freeDictionary(D1); 
+    freeDictionary(D1);
 
     return wordNotFound;
 }
