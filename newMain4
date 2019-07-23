@@ -7,6 +7,7 @@
 #define SYNTAX_ERROR_INPUT 4
 #define DUPLICATE_FOUND 5
 #define NO_DICTIONARY_PATH 6
+#define DICTIONARY_FILE_NOT_FOUND 7
 
 #define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -226,6 +227,12 @@ dictionary * reallocDictionary(dictionary * theDictionary, int targetSize)
 dictionary * loadDictionary(char * fileName)
 {
     FILE * f = fopen(fileName,"r");
+    if (f==NULL)
+    {
+        fprintf(stderr,"[loadDictionary]: file \"%s\" does not exist. exiting...\n",fileName);
+        exit(DICTIONARY_FILE_NOT_FOUND);
+    }
+
     //ByteCounter += BUFSIZ;
     dictionary * theDictionary = initDictionary();
 
@@ -307,7 +314,7 @@ char * decapitalize(char * target) /// TO BE USED ONLY WITH target CONTAINING LE
     return target;
 }
 
-char * findWord2(char * theWord, struct dictionary * theDictionary)
+char * findWord2(char * theWord, struct dictionary * theDictionary, int * wordNotFound)
 {           
     int capital = (theWord[0] < 92); // find if first letter is capital
     theWord = decapitalize(theWord); // decapitalize
@@ -333,12 +340,12 @@ char * findWord2(char * theWord, struct dictionary * theDictionary)
     strcat(notFound,theWord);
     strcat(notFound,">\0");  
     notFound[1] -= capital * 32; // recapitalize 
-
+    if (*wordNotFound != 1) {*wordNotFound = 1;}
     return notFound;
 
 }
 
-void parseAndPrint2(char * delims, struct dictionary * theDictionary)
+int parseAndPrint2(char * delims, struct dictionary * theDictionary)
 {
     //freopen( "a.txt", "w", stdout ); // stdout to file a.txt
     int charCounter = 0 ;
@@ -346,6 +353,7 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
     char * word = (char * ) malloc(sizeof(char) * WORD_SIZE_INITIAL);
     char * t1;
     int allocatedSize = WORD_SIZE_INITIAL; 
+    int wordNotFound = 0;
 
     while ((ch = getc(stdin)) != EOF){
  
@@ -358,7 +366,7 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
             else
             {
                 word[charCounter] = '\0'; 
-                t1 = findWord2(word,theDictionary);
+                t1 = findWord2(word,theDictionary,&wordNotFound);
                 printf("%s",t1);
                 free(t1);       
                 printf("%c",ch);
@@ -389,13 +397,13 @@ void parseAndPrint2(char * delims, struct dictionary * theDictionary)
     if ((ch == EOF) && (charCounter>0)) // when the input ends with a letter before EOF
     {
         word[charCounter] = '\0';
-        t1 = findWord2(word,theDictionary);
+        t1 = findWord2(word,theDictionary,&wordNotFound);
         printf("%s",t1);
         free(t1);
     }
 
     free(word);
-    return;
+    return wordNotFound;
 }
 
 
@@ -405,6 +413,7 @@ int main(int argc, char ** argv) {
         fprintf(stderr,"dictionary path missing. exiting...");
         exit(NO_DICTIONARY_PATH);
     }
+    int wordNotFound = 0;
     dictionary * D1 = loadDictionary(argv[1]);
     //printf("%lu\n",ByteCounter+1024);
 
@@ -412,9 +421,9 @@ int main(int argc, char ** argv) {
     checkForDuplicate(D1);
     //printDictionary(D1);
     if (D1->wordCount==0){exit(EXIT_SUCCESS);}
-    parseAndPrint2(LETTERS,D1);
+    wordNotFound = parseAndPrint2(LETTERS,D1);
     freeDictionary(D1); 
 
-    return 0;
+    return wordNotFound;
 }
 
