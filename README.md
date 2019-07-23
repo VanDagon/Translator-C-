@@ -16,3 +16,4 @@ TO DOs:
 6. remove 'struct' keywords
 7. fix EOF error
 8. remove ByteCounter
+9. optimize memory size
