@@ -30,7 +30,7 @@ struct dictionary{
     int wordCount;
     int allocatedSize;
     dictionaryTuple * list;
-    int dictionaryRead;
+    int dictionaryRead; // set to 1 when EOF of the dictioanary file is reached
 };
 typedef struct dictionary dictionary;
 
@@ -48,8 +48,8 @@ void freeDictionary(dictionary * theDictionary)
 
 void handleError(int errorCode, dictionary * theDictionary, char * context)
 {
-
-    if (theDictionary!=NULL)
+    // theDictioanry will be pointing to NULL if dictionary has not been allocated in the context
+    if (theDictionary!=NULL) // free the dictionary only if it has been allocated in the context
     {
         freeDictionary(theDictionary);
     }
@@ -97,12 +97,12 @@ void handleError(int errorCode, dictionary * theDictionary, char * context)
             exit(errorCode);
         }
     }
-    
+    return;
 }
 
 dictionary * initDictionary()
 {
-    dictionary * theDictionary = (dictionary *) malloc(sizeof(dictionary));
+    dictionary * theDictionary = (dictionary *) malloc(sizeof(dictionary)); 
     if (theDictionary == NULL)
     {
         handleError(SAFEMALLOC_ALLOCATION_ERROR,NULL,"[initDictionary] malloc:");
@@ -157,42 +157,44 @@ char * readNextWord(FILE * f, dictionary * theDictionary)
     
     int allocatedSize = WORD_SIZE_INITIAL;
     int charCounter = 0;
-    int charCondition;
+    int charCondition; 
 
     while (1)
     {   
         ch = fgetc(f);
         
-
+        // charCounter is 1 if the character 'ch' is currently invalid 
         charCondition = ((!checkChar(ch,DICTIONARY_ALLOWED_CHARACTERS)) || ((ch==':') && (charCounter==0)) );
 
-        if (ch==EOF)
+        if (ch==EOF) // this means the last line is empty, so dictionary has been read
         {
             theDictionary->dictionaryRead = 1;
             free(read);
             return NULL;
         }
 
-        if (charCondition)
+        if (charCondition) // invalid character detected
         {
             free(read);
             handleError(SYNTAX_ERROR_DICTIONARY,theDictionary,"[readNextWord]:");
         }
 
-        else if (ch == ':')
+        else if (ch == ':') // the German word has been read, colon has been reached
         {   
-            read[charCounter] = '\0';
-            read = safeRealloc(read,strlen(read)+1,theDictionary);
+            read[charCounter] = '\0'; 
+
+            // reduces the allocated size of 'read' to the length of word
+            read = safeRealloc(read,strlen(read)+1,theDictionary);  
             return read;
         }
-        else
+        else // append current character to 'read'
         {
-            if (charCounter>=allocatedSize)
+            if (charCounter>=allocatedSize) // reallocate 'read' if necessary
             {
                 read = safeRealloc(read,allocatedSize*2,theDictionary);
                 allocatedSize*=2;
             }
-            read[charCounter++] = ch;   
+            read[charCounter++] = ch; // increment 'charCounter'
         }
         
     }
@@ -211,36 +213,40 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
     while (1)
     {   
         ch = fgetc(f);
+        // charCounter is 1 if the character 'ch' is currently invalid 
         charCondition = (!checkChar(ch,DICTIONARY_ALLOWED_CHARACTERS));
 
-        if (ch==EOF)
+        if (ch==EOF) 
         {
-            if (charCounter==0){
+            if (charCounter==0){ // this means there was no translation after ':' on the last line of dictionary
                 free(read);
                 handleError(SYNTAX_ERROR_DICTIONARY,theDictionary,"[readNextTranslation]:");
             }
+
+            // last translation read
             theDictionary->dictionaryRead = 1;
             read[charCounter] = '\0';
             return read;
         }
-        else if (ch == '\n')
+        else if (ch == '\n') 
         {   
-            if (charCounter==0){
+            if (charCounter==0){ // this means there was no translation after ':' at current line
                 free(read);
                 handleError(SYNTAX_ERROR_DICTIONARY,theDictionary,"[readNextTranslation]:");
             }
+            // current translation read
             read[charCounter] = '\0';
             read = safeRealloc(read,strlen(read)+1,theDictionary);
             return read;
         }
-        else if (charCondition)
+        else if (charCondition) // invalid character detected
         {
             free(read);
             handleError(SYNTAX_ERROR_DICTIONARY,theDictionary,"[readNextTranslation]:");
         }
-        else
+        else // append 'ch' to 'read'
         {
-            if (charCounter>=allocatedSize)
+            if (charCounter>=allocatedSize) // reallocate 'read' if necessary
             {
                 read = safeRealloc(read,allocatedSize*2,theDictionary);
                 allocatedSize*=2;
@@ -265,7 +271,7 @@ dictionary * reallocDictionary(dictionary * theDictionary, int targetSize)
 
     theDictionary->list = testBuffer;
 
-    for (int i = 0; i < theDictionary->wordCount-1; i ++)
+    for (int i = 0; i < theDictionary->wordCount-1; i ++) // redundant?
     {
         testBuffer[i] = theDictionary->list[i];
     }
@@ -294,7 +300,7 @@ dictionary * loadDictionary(char * fileName)
             theDictionary = reallocDictionary(theDictionary,theDictionary->allocatedSize*2);
 
         }
-
+        // get next German word
         theDictionary->list[theDictionary->wordCount].word = readNextWord(f,theDictionary);
 
         if (theDictionary->list[theDictionary->wordCount].word == NULL)
@@ -302,12 +308,12 @@ dictionary * loadDictionary(char * fileName)
             
             break;
         }
-
+        // get next translation
         theDictionary->list[theDictionary->wordCount].translation = readNextTranslation(f,theDictionary);
         theDictionary->wordCount++;
     } 
 
-    if (theDictionary->wordCount>0)
+    if (theDictionary->wordCount>0) // reallocate dictionary to exactly match the amount of read words
     {
         theDictionary = reallocDictionary(theDictionary,theDictionary->wordCount);
     }
@@ -334,6 +340,7 @@ int compare(const void *s1, const void *s2)
     return strcmp(e1->word,e2->word);
 }
 
+// sorts the dictionary alphabetically
 void qSortLibrary(dictionary * theDictionary)
 {
     dictionaryTuple * base = &theDictionary->list[0];
@@ -369,37 +376,33 @@ char * findWord2(char * theWord, dictionary * theDictionary, int * wordNotFound)
 {    
     size_t ll = strlen(theWord)+1;
     char * copyWord = (char *) safeMalloc(ll+1, theDictionary);
-    strcpy(copyWord,theWord);
-    int capital = (theWord[0] < 92); // find if first letter is capital
+    strcpy(copyWord,theWord); // copy the word so to print with capital letters if it's not found in dictioanary
+    int capital = (theWord[0] < 92); 
     theWord = decapitalize(theWord); // decapitalize
     int l = theDictionary->wordCount;
  
     dictionaryTuple key; 
     key.word = theWord; 
-
+    // use binary search with key to find 'theWord' in dictionary faster
     dictionaryTuple * foundTuple = (dictionaryTuple *) bsearch(&key, theDictionary->list, l, sizeof(dictionaryTuple), compare);
 
-    if( foundTuple != NULL ) {
-        //fprintf(stderr,"%zu\n", GetFreeSize());
-        
+    if( foundTuple != NULL ) {        
         char * found = (char *) safeMalloc (strlen(foundTuple->translation)+1,theDictionary); 
         
-        //strcpy(found,foundTuple->translation);
         found[0] = '\0';
-        strcat(found,foundTuple->translation);  
+        strcat(found,foundTuple->translation); // copy translation into found 
         found[0] -= 32 * (capital);
-        free(copyWord);
+        free(copyWord); // free unneeded 'copyWord'
         return found;
     }  
 
-    
+    // put 'copyWord' between <> and return the result
     char * notFound = (char *) safeMalloc(5+strlen(theWord),theDictionary);
     notFound[0] = '<';
     notFound[1] = '\0';
     strcat(notFound,copyWord);
     strcat(notFound,">\0");  
-    //notFound[1] -= capital * 32; // recapitalize 
-    if (*wordNotFound != 1) {*wordNotFound = 1;}
+    if (*wordNotFound != 1) {*wordNotFound = 1;} // this sets wordNotFound to 1, since there is at least one word without translation
     free(copyWord);
     return notFound;
 
@@ -409,7 +412,7 @@ int parseAndPrint2(char * delims, dictionary * theDictionary)
 {
     int emptyInput = 1;
     int charCounter = 0 ;
-    int stringMultiplier = 2;
+    int stringMultiplier = 2; 
     char ch;
     char * word = (char * ) safeMalloc(WORD_SIZE_INITIAL,theDictionary);
     char * t1;
@@ -418,21 +421,21 @@ int parseAndPrint2(char * delims, dictionary * theDictionary)
     int charCondition;
 
     while ((ch = getc(stdin)) != EOF){
-        emptyInput = 0;
+        emptyInput = 0; // if the very first character is EOF, then the value of 'emptyInput' remains 1
         charCondition = ( ( (ch<32) || (ch>126) ) && (ch!='\n') );
 
-        if (charCondition){
+        if (charCondition){ // invalid character found
             free(word);
             handleError(SYNTAX_ERROR_INPUT,theDictionary,"[parseAndPrint]:");
         }
 
-        if (!checkChar(ch,delims))
+        if (!checkChar(ch,delims)) // if 'ch' is not a letter
         {
-            if (charCounter==0)
+            if (charCounter==0) // if 0, then no word has been read, or last character was non-letter
             {
                 printf("%c",ch);
             }
-            else
+            else // word has been read and translation should be printed after current 'ch'
             {
                 word[charCounter] = '\0'; 
                 t1 = findWord2(word,theDictionary,&wordNotFound);
@@ -441,20 +444,18 @@ int parseAndPrint2(char * delims, dictionary * theDictionary)
                 printf("%c",ch);
             }
             
-            charCounter = 0;
+            charCounter = 0; // if 'ch' is non-letter, 'word' and 'charCounter' need to be reset
             word = safeRealloc(word,WORD_SIZE_INITIAL+1,theDictionary);
             allocatedSize = WORD_SIZE_INITIAL;
-            //strcpy(word,"");
+            //strcpy(word,"") ? ? ?
         }
-        else
+        else // if 'ch' is a letter
         {
-            word[charCounter] = ch;
+            word[charCounter] = ch; // append 'ch' to 'word'
             charCounter++;
 
-            if (charCounter>=allocatedSize) // realloc more bytes for word if needed
+            if (charCounter>=allocatedSize) // realloc more bytes for 'word' if needed
             {
-                //allocatedSize = buffWord(word,allocatedSize);
-                //word = (char *) realloc(word,sizeof(char) * (allocatedSize*2));
                 word = safeRealloc(word,allocatedSize*stringMultiplier,theDictionary);
                 allocatedSize *= stringMultiplier;
             } 
@@ -463,14 +464,14 @@ int parseAndPrint2(char * delims, dictionary * theDictionary)
     
     }
 
-    if ((ch == EOF) && (charCounter>0)) // when the input ends with a letter before EOF
+    if ((ch == EOF) && (charCounter>0)) // when the input ends with a word before EOF
     {
-        if (emptyInput) {
+        if (emptyInput) { // there is no input
             freeDictionary(theDictionary);
-            exit(EXIT_SUCCESS);
+            exit(EXIT_SUCCESS); // empty input is valid; program must exit with success code
         }
         word[charCounter] = '\0';
-        t1 = findWord2(word,theDictionary,&wordNotFound);
+        t1 = findWord2(word,theDictionary,&wordNotFound); // find the translation of last word and print it
         printf("%s",t1);
         free(t1);
     }
@@ -479,17 +480,14 @@ int parseAndPrint2(char * delims, dictionary * theDictionary)
     return wordNotFound;
 }
 
-
-
 int main(int argc, char ** argv) {
 
-    if (argc==1)
+    if (argc==1) // if no dictionary path has been given as argument
     {
         handleError(NO_DICTIONARY_PATH,NULL,"[main]:");
     }
     int wordNotFound = 0;
     dictionary * D1 = loadDictionary(argv[1]);
-
 
     qSortLibrary(D1);
     checkForDuplicate(D1);
@@ -498,6 +496,5 @@ int main(int argc, char ** argv) {
     wordNotFound = parseAndPrint2(LETTERS,D1);
     freeDictionary(D1);
 
-    return wordNotFound;
+    return wordNotFound; // 0 if all input words were translated, 1 otherwise
 }
-
