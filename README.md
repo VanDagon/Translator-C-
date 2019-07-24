@@ -8,9 +8,9 @@ Takes input through stdin, replaces every word with the corresponding word in an
 Gives the output in stdout.
 
 TO DOs:
-1. write comments
-2. rename functions
-3. write cpital as func
+1. check error handling with valgrind
+2. +
+3. +
 4. +
 5. +
 6. +
@@ -21,7 +21,3 @@ TO DOs:
 11. +
 
 -- try to malloc individual extra dictionaryTuples
-
--- make ch int?
-
--- enums for error codes
