@@ -3,7 +3,8 @@
 #include <string.h>
 
 #define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define DICTIONARY_ALLOWED_CHARACTERS "abcdefghijklmnopqrstuvwxyz:\n"
+#define WORD_ALLOWED_CHARACTERS "abcdefghijklmnopqrstuvwxyz:\n"
+#define TRANSLATION_ALLOWED_CHARACTER "abcdefghijklmnopqrstuvwxyz\n"
 
 #define DICTIONARY_INITIAL_SIZE 64
 
@@ -118,7 +119,7 @@ dictionary * initDictionary()
     theDictionary->f = NULL;
     if (theDictionary == NULL)
     {
-        handleError(SAFEMALLOC_ALLOCATION_ERROR,NULL,"[initDictionary] malloc:");
+        handleError(SAFEMALLOC_ALLOCATION_ERROR,NULL,"[initDictionary] malloc:"); // not actually safemalloc
     }
     theDictionary->wordCount = 0;
     theDictionary->dictionaryRead = 0;
@@ -126,7 +127,7 @@ dictionary * initDictionary()
     theDictionary->list = (dictionaryTuple*) malloc(DICTIONARY_INITIAL_SIZE * sizeof(dictionaryTuple));
     if (theDictionary->list == NULL)
     {
-        handleError(SAFEMALLOC_ALLOCATION_ERROR,NULL,"[initDictionary]: malloc");
+        handleError(SAFEMALLOC_ALLOCATION_ERROR,NULL,"[initDictionary]: malloc"); // not actually safemalloc
     }
 
     theDictionary->allocatedSize = DICTIONARY_INITIAL_SIZE;
@@ -149,7 +150,6 @@ char * safeMalloc(int targetSize, dictionary * theDictionary)
     }
     return testBuffer;
 }
-
 
 char * safeRealloc(char * target, int targetSize, dictionary * theDictionary)
 {
@@ -177,7 +177,7 @@ char * readNextWord(FILE * f, dictionary * theDictionary)
         ch = fgetc(f);
         
         // charCounter is 1 if the character 'ch' is currently invalid 
-        charCondition = ((!checkChar(ch,DICTIONARY_ALLOWED_CHARACTERS)) || ((ch==':') && (charCounter==0)) );
+        charCondition = ((!checkChar(ch,WORD_ALLOWED_CHARACTERS)) || ((ch==':') && (charCounter==0)) );
 
         if (ch==EOF) // this means the last line is empty, so dictionary has been read
         {
@@ -226,7 +226,7 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
     {   
         ch = fgetc(f);
         // charCounter is 1 if the character 'ch' is currently invalid 
-        charCondition = (!checkChar(ch,DICTIONARY_ALLOWED_CHARACTERS));
+        charCondition = (!checkChar(ch,TRANSLATION_ALLOWED_CHARACTER));
 
         if (ch==EOF) 
         {
@@ -498,7 +498,7 @@ int main(int argc, char ** argv) {
     dictionary * D1 = loadDictionary(argv[1]);
     qSortLibrary(D1);
     checkForDuplicate(D1);
-    //printDictionary(D1);
+    printDictionary(D1);
 
     wordNotFound = parseAndPrint(LETTERS,D1);
     freeDictionary(D1);
