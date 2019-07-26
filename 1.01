@@ -3,7 +3,8 @@
 #include <string.h>
 
 #define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define DICTIONARY_ALLOWED_CHARACTERS "abcdefghijklmnopqrstuvwxyz:\n"
+#define WORD_ALLOWED_CHARACTERS "abcdefghijklmnopqrstuvwxyz:\n"
+#define TRANSLATION_ALLOWED_CHARACTERS "abcdefghijklmnopqrstuvwxyz\n"
 
 #define DICTIONARY_INITIAL_SIZE 64
 
@@ -177,7 +178,7 @@ char * readNextWord(FILE * f, dictionary * theDictionary)
         ch = fgetc(f);
         
         // charCounter is 1 if the character 'ch' is currently invalid 
-        charCondition = ((!checkChar(ch,DICTIONARY_ALLOWED_CHARACTERS)) || ((ch==':') && (charCounter==0)) );
+        charCondition = ((!checkChar(ch,WORD_ALLOWED_CHARACTERS)) || ((ch==':') && (charCounter==0)) );
 
         if (ch==EOF) // this means the last line is empty, so dictionary has been read
         {
@@ -226,7 +227,7 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
     {   
         ch = fgetc(f);
         // charCounter is 1 if the character 'ch' is currently invalid 
-        charCondition = (!checkChar(ch,DICTIONARY_ALLOWED_CHARACTERS));
+        charCondition = (!checkChar(ch,TRANSLATION_ALLOWED_CHARACTERS));
 
         if (ch==EOF) 
         {
