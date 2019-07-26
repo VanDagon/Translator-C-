@@ -9,7 +9,7 @@ Gives the output in stdout.
 
 TO DOs:
 1. check stack usage
-
+2. find duplicate : in dictionary
 
 -- test qsort and bsearch on linked list
 
