@@ -212,7 +212,7 @@ char * readNextWord(FILE * f, dictionary * theDictionary)
         
     }
 
-    return read;
+    // return read; 
 }
 
 char * readNextTranslation(FILE * f, dictionary * theDictionary)
