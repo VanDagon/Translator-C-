@@ -3,7 +3,7 @@
 #include <string.h>
 
 #define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define WORD_ALLOWED_CHARACTERS "abcdefghijklmnopqrstuvwxyz:\n"
+#define WORD_ALLOWED_CHARACTERS "abcdefghijklmnopqrstuvwxyz:"
 #define TRANSLATION_ALLOWED_CHARACTERS "abcdefghijklmnopqrstuvwxyz\n"
 
 #define DICTIONARY_INITIAL_SIZE 64
@@ -178,7 +178,7 @@ char * readNextWord(FILE * f, dictionary * theDictionary)
         ch = fgetc(f);
         
         // charCounter is 1 if the character 'ch' is currently invalid 
-        charCondition = ((!checkChar(ch,WORD_ALLOWED_CHARACTERS)) || ((ch==':') && (charCounter==0)) );
+        charCondition = ((!checkChar(ch,WORD_ALLOWED_CHARACTERS)) || ((ch==':') && (charCounter==0)) || (ch == '\0') );
 
         if (ch==EOF) // this means the last line is empty, so dictionary has been read
         {
@@ -227,13 +227,15 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
     {   
         ch = fgetc(f);
         // charCounter is 1 if the character 'ch' is currently invalid 
-        charCondition = (!checkChar(ch,TRANSLATION_ALLOWED_CHARACTERS));
+        charCondition = (!checkChar(ch,TRANSLATION_ALLOWED_CHARACTERS) || (ch == '\0') );
+
+
 
         if (ch==EOF) 
         {
             if (charCounter==0){ // this means there was no translation after ':' on the last line of dictionary
                 free(read);
-                free(theDictionary->list[theDictionary->wordCount+1].word);
+                free(theDictionary->list[theDictionary->wordCount].word);
                 handleError(SYNTAX_ERROR_DICTIONARY,theDictionary,"[readNextTranslation]:");
             }
 
@@ -246,7 +248,7 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
         {   
             if (charCounter==0){ // this means there was no translation after ':' at current line
                 free(read);
-                free(theDictionary->list[theDictionary->wordCount+1].word);
+                free(theDictionary->list[theDictionary->wordCount].word);
                 handleError(SYNTAX_ERROR_DICTIONARY,theDictionary,"[readNextTranslation]:");
             }
             // current translation read
@@ -258,7 +260,7 @@ char * readNextTranslation(FILE * f, dictionary * theDictionary)
         {
             free(read);
             free(theDictionary->list[theDictionary->wordCount].word);
-            handleError(SYNTAX_ERROR_DICTIONARY,theDictionary,"[readNextTranslation]:");
+            handleError(SYNTAX_ERROR_DICTIONARY,theDictionary,"[readNextTranslation]: ");
         }
         else // append 'ch' to 'read'
         {
